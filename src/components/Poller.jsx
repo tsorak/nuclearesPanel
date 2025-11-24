@@ -17,6 +17,7 @@ export default function Poller({ storeEntry, mutStoreEntry, pollerStore }) {
     parserOverride,
   });
 
+  let lastRate = getRate();
   const [editingPollRate, setEditingPollRate] = createSignal(false);
 
   const mutPollRate = {
@@ -45,7 +46,11 @@ export default function Poller({ storeEntry, mutStoreEntry, pollerStore }) {
 
   createEffect(() => {
     if (!editingPollRate()) {
-      poller.interval.restart();
+      const rate = getRate();
+      if (rate !== lastRate) {
+        poller.interval.restart();
+        lastRate = rate;
+      }
     }
   });
 
@@ -53,16 +58,31 @@ export default function Poller({ storeEntry, mutStoreEntry, pollerStore }) {
     pollerStore.unsubscribe(varName);
   });
 
+  const pollerStatusBg = () => poller.interval.active() ? "#0f0" : "#f00";
+  const pollerToggle = () => {
+    if (poller.interval.active()) {
+      poller.interval.stop();
+    } else {
+      poller.interval.restart();
+    }
+  };
+
   return (
     <div
-      class="flex bg-gray-500 px-2 pt-2"
+      class="flex px-2 pt-2"
       onpointerenter={() => setEditingPollRate(true)}
       onpointerleave={() => setEditingPollRate(false)}
       onwheel={(ev) => ev.deltaY > 0 ? mutPollRate.dec() : mutPollRate.inc()}
     >
-      <div class="flex flex-col items-center">
+      <div class="relative flex flex-col items-center">
         <span class="text-[8pt] leading-0">
           {pollRateHumanFormat()}
+        </span>
+        <span
+          class="absolute w-2 h-2 rounded-full -right-1 -top-1"
+          style={{ "background": pollerStatusBg() }}
+          onclick={pollerToggle}
+        >
         </span>
         <h6>
           {title}

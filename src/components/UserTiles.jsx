@@ -4,7 +4,6 @@ import { clientOnly } from "@solidjs/start";
 
 import Poller from "./Poller.jsx";
 import { makePoller } from "../poller.js";
-import { onCleanup } from "solid-js";
 
 export default clientOnly(async () => ({ default: UserTiles }), { lazy: true });
 
@@ -17,18 +16,58 @@ function UserTiles(props) {
     persistStore.save(store);
   };
 
+  const sections = () => {
+    const sections = {};
+
+    for (const tile of store.tiles) {
+      if (!tile.sections) {
+        if (sections["quick"]) {
+          sections["quick"].push(tile);
+        } else {
+          sections["quick"] = [tile];
+        }
+      } else {
+        for (const s of tile.sections) {
+          if (sections[s]) {
+            sections[s].push(tile);
+          } else {
+            sections[s] = [tile];
+          }
+        }
+      }
+    }
+
+    return Array.from(Object.entries(sections));
+  };
+
   return (
-    <>
-      <For each={store.tiles}>
-        {(tile, i) => (
-          <Poller
-            storeEntry={tile}
-            mutStoreEntry={(...args) => mutAndSaveStore("tiles", i(), ...args)}
-            pollerStore={pollers}
-          />
-        )}
+    <div class="flex flex-wrap gap-2">
+      <For each={sections()}>
+        {([section, tiles]) => {
+          return (
+            <div class="min-w-xs">
+              <div class="warning-stripes flex justify-center">
+                <h5 class="bg-black text-white font-mono uppercase px-2 leading-6">
+                  {section}
+                </h5>
+              </div>
+              <div class="flex justify-evenly bg-gray-600 text-white pb-2">
+                <For each={tiles}>
+                  {(tile, i) => (
+                    <Poller
+                      storeEntry={tile}
+                      mutStoreEntry={(...args) =>
+                        mutAndSaveStore("tiles", i(), ...args)}
+                      pollerStore={pollers}
+                    />
+                  )}
+                </For>
+              </div>
+            </div>
+          );
+        }}
       </For>
-    </>
+    </div>
   );
 }
 
@@ -68,7 +107,7 @@ const persistStore = {
           parse: "1Decimal",
           rate: 2000,
           parserOverride: null,
-          sections: ["core"],
+          sections: ["core", "pressurizer"],
         },
         {
           varName: "CORE_TEMP",
