@@ -1,42 +1,21 @@
-import { createEffect } from "solid-js";
-import { onCleanup } from "solid-js";
-import { createResource, createSignal } from "solid-js";
+import { createEffect, createSignal, onCleanup } from "solid-js";
 
-async function getVariable(varName) {
-  let res;
-  try {
-    res = await fetch(`http://localhost:8785/?variable=${varName}`);
-  } catch (_e) {
-    return "";
-  }
-
-  return await res.text();
-}
-
-export default function Poller({ storeEntry, mutStoreEntry }) {
+export default function Poller({ storeEntry, mutStoreEntry, pollerStore }) {
   const {
     varName,
     parse: parsePreset,
     parserOverride,
     title,
     unit,
-    rate,
   } = storeEntry;
-
   const getRate = () => storeEntry.rate;
 
-  const [value, { refetch: refetchValue }] = createResource(
-    varName,
-    async (v) => {
-      const value = await getVariable(v);
-
-      if (parserOverride) {
-        return await parserOverride(value);
-      }
-
-      return await parseVariable(value, parsePreset);
-    },
-  );
+  const poller = pollerStore.subscribe({
+    variable: varName,
+    getRate,
+    parsePreset,
+    parserOverride,
+  });
 
   const [editingPollRate, setEditingPollRate] = createSignal(false);
 
@@ -64,30 +43,14 @@ export default function Poller({ storeEntry, mutStoreEntry }) {
     }
   };
 
-  const poller = {
-    id: null,
-    restart: function () {
-      this.stop();
-
-      this.id = setInterval(() => {
-        refetchValue();
-      }, getRate());
-    },
-    stop: function () {
-      if (this.id) {
-        clearInterval(this.id);
-      }
-    },
-  };
-
   createEffect(() => {
     if (!editingPollRate()) {
-      poller.restart();
+      poller.interval.restart();
     }
   });
 
   onCleanup(() => {
-    poller.stop();
+    pollerStore.unsubscribe(varName);
   });
 
   return (
@@ -106,39 +69,10 @@ export default function Poller({ storeEntry, mutStoreEntry }) {
         </h6>
         <div class="bg-black w-full flex justify-center">
           <p class="flex gap-1 text-yellow-400 font-mono">
-            {value.latest + unit}
+            {poller.value.latest + unit}
           </p>
         </div>
       </div>
     </div>
   );
-}
-
-function parseVariable(v, type) {
-  try {
-    switch (type) {
-      case "Number":
-        return Math.round(new Number(v));
-      case "String":
-        return v;
-      case "Decimal":
-        return new Number(v);
-      case "1Decimal":
-        return Math.round(new Number(v) * 10) / 10;
-      case "2Decimal":
-        return Math.round(new Number(v) * 100) / 100;
-      case "3Decimal":
-        return Math.round(new Number(v) * 1000) / 1000;
-      case "Boolean":
-        return v === "True";
-      case "StringNewlineList":
-        return "".split("\n");
-      // case "Json":
-      //   return JSON.parse(v);
-      default:
-        return "ERROR: NO PARSER MATCHED";
-    }
-  } catch (err) {
-    return "PARSER ERROR:" + err;
-  }
 }
