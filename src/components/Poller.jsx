@@ -13,6 +13,9 @@ async function getVariable(varName) {
   return await res.text();
 }
 
+/*
+ * parse, parserOverride, varName, title, unit, rate
+ */
 export default function Poller(props) {
   const { varName } = props;
   const parsePreset = props.parse ?? "String";
@@ -67,6 +70,111 @@ export default function Poller(props) {
       this.id = setInterval(() => {
         refetchValue();
       }, this.currentRate.get());
+    },
+    stop: function () {
+      if (this.id) {
+        clearInterval(this.id);
+      }
+    },
+  };
+
+  createEffect(() => {
+    if (!editingPollRate()) {
+      poller.restart();
+    }
+  });
+
+  onCleanup(() => {
+    poller.stop();
+  });
+
+  return (
+    <div
+      class="flex bg-gray-500 px-2 pt-2"
+      onpointerenter={() => setEditingPollRate(true)}
+      onpointerleave={() => setEditingPollRate(false)}
+      onwheel={(ev) => ev.deltaY > 0 ? mutPollRate.dec() : mutPollRate.inc()}
+    >
+      <div class="flex flex-col items-center">
+        <span class="text-[8pt] leading-0">
+          {pollRateHumanFormat()}
+        </span>
+        <h6>
+          {title}
+        </h6>
+        <div class="bg-black w-full flex justify-center">
+          <p class="flex gap-1 text-yellow-400 font-mono">
+            {value.latest + unit}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/*
+ * parse, parserOverride, varName, title, unit, rate
+ */
+export function StoreCompatPoller({ storeEntry, mutStoreEntry }) {
+  const {
+    varName,
+    parse: parsePreset,
+    parserOverride,
+    title,
+    unit,
+    rate,
+  } = storeEntry;
+
+  const getRate = () => storeEntry.rate;
+
+  const [value, { refetch: refetchValue }] = createResource(
+    varName,
+    async (v) => {
+      const value = await getVariable(v);
+
+      if (parserOverride) {
+        return await parserOverride(value);
+      }
+
+      return await parseVariable(value, parsePreset);
+    },
+  );
+
+  // const [pollRate, setPollRate] = createSignal(rate ?? 1000);
+  const [editingPollRate, setEditingPollRate] = createSignal(false);
+
+  const mutPollRate = {
+    dec: () => {
+      mutStoreEntry("rate", (p) => {
+        if (p <= 100) {
+          return p;
+        } else {
+          return p - 100;
+        }
+      });
+    },
+    inc: () => {
+      mutStoreEntry("rate", (p) => p + 100);
+    },
+  };
+
+  const pollRateHumanFormat = () => {
+    const rawRate = getRate();
+    if (rawRate < 1000) {
+      return `${rawRate}ms`;
+    } else {
+      return `${rawRate / 1000}s`;
+    }
+  };
+
+  const poller = {
+    id: null,
+    restart: function () {
+      this.stop();
+
+      this.id = setInterval(() => {
+        refetchValue();
+      }, getRate());
     },
     stop: function () {
       if (this.id) {
