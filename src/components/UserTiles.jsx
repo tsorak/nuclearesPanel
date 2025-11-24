@@ -2,7 +2,7 @@ import { For } from "solid-js";
 import { createStore, unwrap } from "solid-js/store";
 import { clientOnly } from "@solidjs/start";
 
-import { StoreCompatPoller } from "./Poller.jsx";
+import Poller from "./Poller.jsx";
 
 export default clientOnly(async () => ({ default: UserTiles }), { lazy: true });
 
@@ -19,7 +19,7 @@ function UserTiles(props) {
     <>
       <For each={store.tiles}>
         {(tile, i) => (
-          <StoreCompatPoller
+          <Poller
             storeEntry={tile}
             mutStoreEntry={(...args) => mutAndSaveStore("tiles", i(), ...args)}
           />
