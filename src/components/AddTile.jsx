@@ -1,0 +1,188 @@
+import { createSignal } from "solid-js";
+
+import * as helper from "../helper/addTile.js";
+
+export default function AddTile(props) {
+  const availableSections = [
+    "fuel",
+    "pressurizer",
+    "core",
+    "energy",
+    "steam",
+    "condenser",
+    "chemical",
+  ];
+
+  const onsubmit = (ev) => {
+    ev.preventDefault();
+
+    const form = ev.target;
+
+    const v = (el) => el.value;
+    const getSections = () => {
+      return availableSections.map((s) =>
+        form[`section_${s}`].checked ? s : null
+      )
+        .filter((v) => v !== null);
+    };
+
+    const tile = {
+      varName: v(form["Variable"]),
+      title: v(form["Title"]) ?? v(form["Variable"]),
+      unit: v(form["Unit"]) ?? "",
+      parse: v(form["Parser Preset"]),
+      rate: v(form["Polling Interval"]),
+      sections: getSections(),
+    };
+
+    try {
+      helper.validTile(tile);
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+
+    helper.setTile(props, tile);
+  };
+
+  return (
+    <div class="mx-auto flex flex-col justify-center items-center mb-2">
+      <details class="text-white flex flex-col items-center" open>
+        <summary class="bg-gray-600 px-2 py-1 cursor-pointer select-none">
+          Add Tile
+        </summary>
+        <div class="bg-gray-600 p-2 w-xs">
+          <form
+            class="flex flex-col gap-2"
+            onsubmit={onsubmit}
+          >
+            <Input type="text" title="Variable" />
+            <Input type="text" title="Title" />
+            <PresetInput type="text" title="Unit" presets={["°c"]} />
+            <PresetInput
+              type="text"
+              title="Parser Preset"
+              presets={[
+                "Number",
+                "String",
+                "Decimal",
+                "1Decimal",
+                "2Decimal",
+                "3Decimal",
+                "Boolean",
+                "StringNewlineList",
+              ]}
+              default="String"
+            />
+            <PresetInput
+              type="number"
+              title="Polling Interval"
+              presets={[
+                100,
+                500,
+                1000,
+                2000,
+                3000,
+                5000,
+                10000,
+              ]}
+              default={1000}
+            />
+            <MultiOption
+              title="Panel Sections"
+              id="section"
+              options={[
+                "fuel",
+                "pressurizer",
+                "core",
+                "energy",
+                "steam",
+                "condenser",
+                "chemical",
+              ]}
+              class="flex flex-wrap gap-2"
+            />
+            <button
+              class="warning-stripes flex justify-center items-center hover:scale-105 transition-transform cursor-pointer"
+              type="submit"
+            >
+              <span class="bg-black">Add Tile</span>
+            </button>
+          </form>
+        </div>
+      </details>
+    </div>
+  );
+}
+
+function Input(props) {
+  return (
+    <label for={props.title} class="border-b border-dashed">
+      <p class="select-none">{props.title}</p>
+      <input type={props.type ?? "text"} id={props.title} class="min-w-0" />
+    </label>
+  );
+}
+
+function PresetInput(props) {
+  const [v, setV] = createSignal(props.default ?? "");
+
+  if (!props.presets) {
+    throw new Error("Missing prop 'presets'");
+  }
+
+  return (
+    <label for={props.title} class="border-b border-dashed">
+      <p class="select-none">{props.title}</p>
+      <div class="flex">
+        <input
+          type={props.type ?? "text"}
+          id={props.title}
+          oninput={function () {
+            setV(this.value);
+          }}
+          value={v()}
+          class="min-w-0"
+        />
+        <select
+          onchange={(ev) => setV(ev.target.value)}
+          class="bg-gray-600 text-end"
+          value={props.default ?? ""}
+        >
+          {props.default ? null : <option></option>}
+          {props.presets.map((v) => <option key={v}>{v}</option>)}
+        </select>
+      </div>
+    </label>
+  );
+}
+
+function MultiOption(props) {
+  if (!props.options) {
+    throw new Error("Missing prop 'options'");
+  }
+
+  return (
+    <div>
+      <p class="select-none">{props.title}</p>
+      <ul class={props.class ?? ""}>
+        {props.options.map((v) => (
+          <Checkbox key={v} id={`${props.id}_${v}`}>
+            {v}
+          </Checkbox>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function Checkbox(props) {
+  return (
+    <label for={props.id}>
+      <input type="checkbox" class="hidden peer" id={props.id} />
+      <div class="rounded bg-gray-700 peer-checked:bg-green-600 cursor-pointer select-none px-2 py-1">
+        {props.children}
+      </div>
+    </label>
+  );
+}

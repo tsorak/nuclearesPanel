@@ -3,6 +3,7 @@ import { createStore, unwrap } from "solid-js/store";
 import { clientOnly } from "@solidjs/start";
 
 import Poller from "./Poller.jsx";
+import AddTile from "./AddTile.jsx";
 import { makePoller } from "../poller.js";
 
 export default clientOnly(async () => ({ default: UserTiles }), { lazy: true });
@@ -41,32 +42,35 @@ function UserTiles(props) {
   };
 
   return (
-    <div class="flex flex-wrap gap-2">
-      <For each={sections()}>
-        {([section, tiles]) => {
-          return (
-            <div class="min-w-xs">
-              <div class="warning-stripes flex justify-center">
-                <h5 class="bg-black text-white font-mono uppercase px-2 leading-6">
-                  {section}
-                </h5>
+    <div class="flex flex-col">
+      <AddTile store={store} setStore={setStore} />
+      <div class="flex flex-wrap gap-2 mx-auto max-w-xs md:max-w-2xl">
+        <For each={sections()}>
+          {([section, tiles]) => {
+            return (
+              <div class="min-w-xs">
+                <div class="warning-stripes flex justify-center">
+                  <h5 class="bg-black text-white font-mono uppercase px-2 leading-6">
+                    {section}
+                  </h5>
+                </div>
+                <div class="flex justify-evenly bg-gray-600 text-white pb-2">
+                  <For each={tiles}>
+                    {(tile, i) => (
+                      <Poller
+                        storeEntry={tile}
+                        mutStoreEntry={(...args) =>
+                          mutAndSaveStore("tiles", i(), ...args)}
+                        pollerStore={pollers}
+                      />
+                    )}
+                  </For>
+                </div>
               </div>
-              <div class="flex justify-evenly bg-gray-600 text-white pb-2">
-                <For each={tiles}>
-                  {(tile, i) => (
-                    <Poller
-                      storeEntry={tile}
-                      mutStoreEntry={(...args) =>
-                        mutAndSaveStore("tiles", i(), ...args)}
-                      pollerStore={pollers}
-                    />
-                  )}
-                </For>
-              </div>
-            </div>
-          );
-        }}
-      </For>
+            );
+          }}
+        </For>
+      </div>
     </div>
   );
 }
