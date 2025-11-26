@@ -1,28 +1,28 @@
 import { createEffect, createSignal, onCleanup } from "solid-js";
 
-export default function Poller({ storeEntry, mutStoreEntry, pollerStore }) {
+export default function Poller({ tilePointer, pollerStore, addToSection }) {
   const {
     varName,
     parse: parsePreset,
     parserOverride,
     title,
     unit,
-  } = storeEntry;
-  const getRate = () => storeEntry.rate;
+    rate,
+  } = tilePointer();
 
   const poller = pollerStore.subscribe({
     variable: varName,
-    getRate,
+    getRate: rate.get,
     parsePreset,
     parserOverride,
   });
 
-  let lastRate = getRate();
+  let lastRate = rate.get();
   const [editingPollRate, setEditingPollRate] = createSignal(false);
 
   const mutPollRate = {
     dec: () => {
-      mutStoreEntry("rate", (p) => {
+      rate.set((p) => {
         if (p <= 100) {
           return p;
         } else {
@@ -31,12 +31,12 @@ export default function Poller({ storeEntry, mutStoreEntry, pollerStore }) {
       });
     },
     inc: () => {
-      mutStoreEntry("rate", (p) => p + 100);
+      rate.set((p) => p + 100);
     },
   };
 
   const pollRateHumanFormat = () => {
-    const rawRate = getRate();
+    const rawRate = rate.get();
     if (rawRate < 1000) {
       return `${rawRate}ms`;
     } else {
@@ -46,10 +46,10 @@ export default function Poller({ storeEntry, mutStoreEntry, pollerStore }) {
 
   createEffect(() => {
     if (!editingPollRate()) {
-      const rate = getRate();
-      if (rate !== lastRate) {
+      const r = rate.get();
+      if (r !== lastRate) {
         poller.interval.restart();
-        lastRate = rate;
+        lastRate = r;
       }
     }
   });
@@ -73,6 +73,10 @@ export default function Poller({ storeEntry, mutStoreEntry, pollerStore }) {
       onpointerenter={() => setEditingPollRate(true)}
       onpointerleave={() => setEditingPollRate(false)}
       onwheel={(ev) => ev.deltaY > 0 ? mutPollRate.dec() : mutPollRate.inc()}
+      oncontextmenu={(ev) => {
+        ev.preventDefault();
+        addToSection("pressurizer", tilePointer);
+      }}
     >
       <div class="relative flex flex-col items-center">
         <span class="text-[8pt] leading-0">

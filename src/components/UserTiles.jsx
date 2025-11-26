@@ -1,84 +1,98 @@
 import { For } from "solid-js";
-import { createStore, unwrap } from "solid-js/store";
+import { createStore } from "solid-js/store";
 import { clientOnly } from "@solidjs/start";
 
 import Poller from "./Poller.jsx";
 import AddTile from "./AddTile.jsx";
 import { makePoller } from "../poller.js";
+import { Suspense } from "solid-js";
+import * as tileHelper from "../helper/tile.js";
+import { createStoreHelper } from "../helper/store.js";
 
 export default clientOnly(async () => ({ default: UserTiles }), { lazy: true });
 
 function UserTiles(props) {
-  const [store, setStore] = createStore(persistStore.load_or_default());
+  const [store, setStore] = createStore(persistStore.loadOrDefault());
   const pollers = makePollerStore();
 
-  const mutAndSaveStore = (...args) => {
-    setStore(...args);
-    persistStore.save(store);
-  };
+  const storeHelper = createStoreHelper(store, setStore);
 
   const sections = () => {
-    const sections = {};
-
-    for (const tile of store.tiles) {
-      if (!tile.sections) {
-        if (sections["quick"]) {
-          sections["quick"].push(tile);
-        } else {
-          sections["quick"] = [tile];
-        }
-      } else {
-        for (const s of tile.sections) {
-          if (sections[s]) {
-            sections[s].push(tile);
-          } else {
-            sections[s] = [tile];
-          }
-        }
-      }
-    }
-
-    return Array.from(Object.entries(sections));
+    return Array.from(Object.entries(store.sections));
   };
 
   return (
     <div class="flex flex-col">
-      <AddTile store={store} setStore={setStore} />
+      <div class="flex justify-center items-start">
+        <AddTile store={store} setStore={setStore} />
+        <button
+          type="button"
+          class="bg-gray-600 text-white py-1 px-2 cursor-pointer"
+          onclick={() => persistStore.save(store)}
+        >
+          Save
+        </button>
+      </div>
       <div class="flex flex-wrap gap-2 mx-auto max-w-xs md:max-w-2xl">
-        <For each={sections()}>
-          {([section, tiles]) => {
-            return (
-              <div class="min-w-xs">
-                <div class="warning-stripes flex justify-center">
-                  <h5 class="bg-black text-white font-mono uppercase px-2 leading-6">
-                    {section}
-                  </h5>
+        <Suspense>
+          <For each={sections()}>
+            {([section, tiles]) => {
+              return (
+                <div class="min-w-xs">
+                  <div class="warning-stripes flex justify-center">
+                    <h5 class="bg-black text-white font-mono uppercase px-2 leading-6">
+                      {section}
+                    </h5>
+                  </div>
+                  <div class="flex justify-evenly bg-gray-600 text-white pb-2">
+                    <For each={tiles}>
+                      {(tile, i) => (
+                        <Poller
+                          tilePointer={tile}
+                          pollerStore={pollers}
+                          addToSection={storeHelper.addToSection}
+                        />
+                      )}
+                    </For>
+                  </div>
                 </div>
-                <div class="flex justify-evenly bg-gray-600 text-white pb-2">
-                  <For each={tiles}>
-                    {(tile, i) => (
-                      <Poller
-                        storeEntry={tile}
-                        mutStoreEntry={(...args) =>
-                          mutAndSaveStore("tiles", i(), ...args)}
-                        pollerStore={pollers}
-                      />
-                    )}
-                  </For>
-                </div>
-              </div>
-            );
-          }}
-        </For>
+              );
+            }}
+          </For>
+        </Suspense>
       </div>
     </div>
   );
 }
 
 const persistStore = {
-  save: (storeProxy) => {
-    const storeData = unwrap(storeProxy);
-    localStorage.setItem("store", JSON.stringify(storeData));
+  save: (storeData) => {
+    const tiles = (() => {
+      const tiles = Object.entries(storeData.tiles).map(
+        ([varName, { sections, pointer }]) => {
+          const {
+            title,
+            unit,
+            parse,
+            rate,
+          } = pointer();
+
+          return {
+            varName,
+            title,
+            unit,
+            parse,
+            rate: rate.get(),
+            sections,
+          };
+        },
+      );
+
+      return tiles;
+    })();
+
+    const str = JSON.stringify(tiles);
+    localStorage.setItem("store", str);
   },
   load: () => {
     const storeData = localStorage.getItem("store");
@@ -93,37 +107,29 @@ const persistStore = {
 
     return null;
   },
-  load_or_default: function () {
-    return this.load() ?? {
-      // Sections:
-      // fuel
-      // pressurizer
-      // core
-      // energy
-      // steam
-      // condenser
-      // chemical
-      tiles: [
-        {
-          varName: "CORE_PRESSURE",
-          title: "Vessel Pressure",
-          unit: "bar",
-          parse: "1Decimal",
-          rate: 2000,
-          parserOverride: null,
-          sections: ["core", "pressurizer"],
-        },
-        {
-          varName: "CORE_TEMP",
-          title: "Internal Temperature",
-          unit: "°c",
-          parse: "Decimal",
-          rate: 1000,
-          parserOverride: null,
-          sections: ["core"],
-        },
-      ],
-    };
+  loadOrDefault: function () {
+    const defaultTiles = [
+      {
+        varName: "CORE_PRESSURE",
+        title: "Vessel Pressure",
+        unit: "bar",
+        parse: "1Decimal",
+        rate: 2000,
+        parserOverride: null,
+        sections: ["core", "pressurizer"],
+      },
+      {
+        varName: "CORE_TEMP",
+        title: "Internal Temperature",
+        unit: "°c",
+        parse: "Decimal",
+        rate: 1000,
+        parserOverride: null,
+        sections: ["core"],
+      },
+    ];
+
+    return tileHelper.tileToStoreStructure(this.load() ?? defaultTiles);
   },
 };
 

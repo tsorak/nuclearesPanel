@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
 
-import * as helper from "../helper/addTile.js";
+import * as helper from "../helper/tile.js";
 
 export default function AddTile(props) {
   const availableSections = [
@@ -42,12 +42,18 @@ export default function AddTile(props) {
       return false;
     }
 
-    helper.setTile(props, tile);
+    try {
+      helper.addTile(props, tile);
+    } catch (err) {
+      if (err instanceof helper.error.Exists) {
+        console.error(`Tile with Variable '${tile.varName}' exists already`);
+      }
+    }
   };
 
   return (
-    <div class="mx-auto flex flex-col justify-center items-center mb-2">
-      <details class="text-white flex flex-col items-center" open>
+    <div class="flex flex-col justify-center items-center mb-2">
+      <details class="text-white flex flex-col items-center">
         <summary class="bg-gray-600 px-2 py-1 cursor-pointer select-none">
           Add Tile
         </summary>
@@ -106,7 +112,7 @@ export default function AddTile(props) {
               class="warning-stripes flex justify-center items-center hover:scale-105 transition-transform cursor-pointer"
               type="submit"
             >
-              <span class="bg-black">Add Tile</span>
+              <span class="bg-black px-1">Add Tile</span>
             </button>
           </form>
         </div>
