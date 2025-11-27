@@ -82,6 +82,15 @@ export default function Tile({ tilePointer, pollerStore, addToSection }) {
     }
   };
 
+  const displayValue = () => {
+    const v = poller.value.latest;
+    if (v instanceof Error) {
+      return "ERROR";
+    } else {
+      return `${v}${unit}`;
+    }
+  };
+
   return (
     <div
       class="flex px-2 pt-2"
@@ -108,7 +117,7 @@ export default function Tile({ tilePointer, pollerStore, addToSection }) {
         </h6>
         <div class="bg-black w-full flex justify-center">
           <p class="flex gap-1 text-yellow-400 font-mono">
-            {poller.value.latest + unit}
+            {displayValue()}
           </p>
         </div>
       </div>

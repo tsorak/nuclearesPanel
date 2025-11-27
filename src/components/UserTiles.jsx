@@ -4,7 +4,7 @@ import { clientOnly } from "@solidjs/start";
 
 import Tile from "./Tile.jsx";
 import AddTile from "./AddTile.jsx";
-import { makePoller } from "../poller.js";
+import * as pollerHelper from "../helper/poller.js";
 import * as tileHelper from "../helper/tile.js";
 import { createStoreHelper } from "../helper/store.js";
 import PollerActiveControls from "./PollerActiveControls.jsx";
@@ -13,7 +13,7 @@ export default clientOnly(async () => ({ default: UserTiles }), { lazy: true });
 
 function UserTiles(props) {
   const [store, setStore] = createStore(persistStore.loadOrDefault());
-  const pollers = makePollerStore();
+  const pollers = pollerHelper.makePollerStore(store.tiles);
 
   const storeHelper = createStoreHelper(store, setStore);
 
@@ -156,57 +156,3 @@ const persistStore = {
     return tileHelper.tileToStoreStructure(this.load() ?? defaultTiles);
   },
 };
-
-// We may want to display the same variable in multiple tiles
-// Instead of doing poll logic within the tile component,
-// have components ask this store for the latest data
-function makePollerStore() {
-  const [store, setStore] = createStore({});
-
-  // const pollerA = {
-  //   value,
-  //   refetch,
-  //   poller,
-  //   subscribers,
-  // }
-
-  return ({
-    store: { proxy: store, set: setStore },
-    subscribe: function (config) {
-      const { variable } = config;
-
-      const poller = this.store.proxy[variable];
-
-      if (!poller) {
-        const poller = makePoller(config);
-        poller.subscribers = 1;
-        this.store.set(variable, poller);
-        return this.store.proxy[variable];
-      }
-
-      this.store.set(variable, "subscribers", (p) => {
-        if (!p) {
-          return 1;
-        } else {
-          return p++;
-        }
-      });
-
-      return poller;
-    },
-    unsubscribe: function (variable) {
-      const poller = this.store.proxy[variable];
-
-      if (!poller) {
-        return;
-      }
-
-      if (poller.subscribers <= 1) {
-        poller.interval.stop();
-        this.store.set(variable, null);
-      } else {
-        this.store.set(variable, "subscribers", (p) => p--);
-      }
-    },
-  });
-}
