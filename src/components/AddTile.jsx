@@ -52,9 +52,9 @@ export default function AddTile(props) {
   };
 
   return (
-    <div class="flex flex-col justify-center items-center mb-2">
-      <details class="text-white flex flex-col items-center">
-        <summary class="bg-gray-600 px-2 py-1 cursor-pointer select-none">
+    <div class="flex flex-col justify-center items-center">
+      <details class="text-white flex flex-col">
+        <summary class="bg-gray-600 px-2 py-1 cursor-pointer select-none text-center">
           Add Tile
         </summary>
         <div class="bg-gray-600 p-2 w-xs">

@@ -1,13 +1,13 @@
-import { For } from "solid-js";
+import { For, Suspense } from "solid-js";
 import { createStore } from "solid-js/store";
 import { clientOnly } from "@solidjs/start";
 
 import Poller from "./Poller.jsx";
 import AddTile from "./AddTile.jsx";
 import { makePoller } from "../poller.js";
-import { Suspense } from "solid-js";
 import * as tileHelper from "../helper/tile.js";
 import { createStoreHelper } from "../helper/store.js";
+import PollerActiveControls from "./PollerActiveControls.jsx";
 
 export default clientOnly(async () => ({ default: UserTiles }), { lazy: true });
 
@@ -22,16 +22,32 @@ function UserTiles(props) {
   };
 
   return (
-    <div class="flex flex-col">
+    <div class="flex flex-col gap-2">
       <div class="flex justify-center items-start">
-        <AddTile store={store} setStore={setStore} />
-        <button
-          type="button"
-          class="bg-gray-600 text-white py-1 px-2 cursor-pointer"
-          onclick={() => persistStore.save(store)}
-        >
-          Save
-        </button>
+        <div>
+          <p class="text-[8pt] text-white warning-stripes">
+            <span class="bg-black px-1">Config</span>
+          </p>
+          <div class="flex items-start">
+            <AddTile store={store} setStore={setStore} />
+            <button
+              type="button"
+              class="bg-gray-600 text-white py-1 px-2 cursor-pointer"
+              onclick={() => persistStore.save(store)}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[8pt] text-white warning-stripes">
+            <span class="bg-black px-1">Poller controls</span>
+          </p>
+          <div class="flex items-start">
+            <PollerActiveControls pollerStore={pollers.store.proxy} />
+          </div>
+        </div>
       </div>
       <div class="flex flex-wrap gap-2 mx-auto max-w-xs md:max-w-2xl">
         <Suspense>
