@@ -2,7 +2,7 @@ import { For, Suspense } from "solid-js";
 import { createStore } from "solid-js/store";
 import { clientOnly } from "@solidjs/start";
 
-import Poller from "./Poller.jsx";
+import Tile from "./Tile.jsx";
 import AddTile from "./AddTile.jsx";
 import { makePoller } from "../poller.js";
 import * as tileHelper from "../helper/tile.js";
@@ -23,32 +23,7 @@ function UserTiles(props) {
 
   return (
     <div class="flex flex-col gap-2">
-      <div class="flex justify-center items-start">
-        <div>
-          <p class="text-[8pt] text-white warning-stripes">
-            <span class="bg-black px-1">Config</span>
-          </p>
-          <div class="flex items-start">
-            <AddTile store={store} setStore={setStore} />
-            <button
-              type="button"
-              class="bg-gray-600 text-white py-1 px-2 cursor-pointer"
-              onclick={() => persistStore.save(store)}
-            >
-              Save
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <p class="text-[8pt] text-white warning-stripes">
-            <span class="bg-black px-1">Poller controls</span>
-          </p>
-          <div class="flex items-start">
-            <PollerActiveControls pollerStore={pollers.store.proxy} />
-          </div>
-        </div>
-      </div>
+      <Nav {...{ store, setStore, pollers }} />
       <div class="flex flex-wrap gap-2 mx-auto max-w-xs md:max-w-2xl">
         <Suspense>
           <For each={sections()}>
@@ -63,7 +38,7 @@ function UserTiles(props) {
                   <div class="flex justify-evenly bg-gray-600 text-white pb-2">
                     <For each={tiles}>
                       {(tile, i) => (
-                        <Poller
+                        <Tile
                           tilePointer={tile}
                           pollerStore={pollers}
                           addToSection={storeHelper.addToSection}
@@ -76,6 +51,39 @@ function UserTiles(props) {
             }}
           </For>
         </Suspense>
+      </div>
+    </div>
+  );
+}
+
+function Nav(props) {
+  const { store, setStore, pollers } = props;
+
+  return (
+    <div class="flex justify-center items-start">
+      <div>
+        <p class="text-[8pt] text-white warning-stripes">
+          <span class="bg-black px-1">Config</span>
+        </p>
+        <div class="flex items-start">
+          <AddTile store={store} setStore={setStore} />
+          <button
+            type="button"
+            class="bg-gray-600 text-white py-1 px-2 cursor-pointer"
+            onclick={() => persistStore.save(store)}
+          >
+            Save
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <p class="text-[8pt] text-white warning-stripes">
+          <span class="bg-black px-1">Poller controls</span>
+        </p>
+        <div class="flex items-start">
+          <PollerActiveControls pollerStore={pollers.store.proxy} />
+        </div>
       </div>
     </div>
   );

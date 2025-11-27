@@ -1,6 +1,6 @@
 import { createEffect, createSignal, onCleanup } from "solid-js";
 
-export default function Poller({ tilePointer, pollerStore, addToSection }) {
+export default function Tile({ tilePointer, pollerStore, addToSection }) {
   const {
     varName,
     parse: parsePreset,
@@ -58,7 +58,22 @@ export default function Poller({ tilePointer, pollerStore, addToSection }) {
     pollerStore.unsubscribe(varName);
   });
 
-  const pollerStatusBg = () => poller.interval.active() ? "#0f0" : "#f00";
+  const [bgTimeout, setBgTimeout] = createSignal(false);
+
+  createEffect(() => {
+    if (poller.value.loading) {
+      setBgTimeout(true);
+      setTimeout(() => {
+        setBgTimeout(false);
+      }, 100);
+    }
+  });
+
+  const pollerStatusBg = () => {
+    if (bgTimeout() || poller.value.loading) return "#08f";
+
+    return poller.interval.active() ? "#0f0" : "#f00";
+  };
   const pollerToggle = () => {
     if (poller.interval.active()) {
       poller.interval.stop();
