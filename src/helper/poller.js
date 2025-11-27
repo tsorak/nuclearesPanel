@@ -47,6 +47,10 @@ export function makePollerStore(tileStore) {
         return this.store.proxy[variable];
       }
 
+      if (poller.deleteId) {
+        this.clearScheduledDeletion(variable);
+      }
+
       this.store.set(variable, "subscribers", (p) => {
         if (!p) {
           return 1;
@@ -65,11 +69,26 @@ export function makePollerStore(tileStore) {
       }
 
       if (poller.subscribers <= 1) {
-        poller.interval.stop();
-        this.store.set(variable, null);
+        this.scheduleDeletion(variable);
+        this.store.set(variable, "subscribers", 0);
       } else {
         this.store.set(variable, "subscribers", (p) => p--);
       }
+    },
+    scheduleDeletion: function (variable) {
+      if (this.store.proxy[variable].deleteId) return;
+
+      const id = setTimeout(() => {
+        this.store.proxy[variable].interval.stop();
+        this.store.set(variable, undefined);
+      }, 1000);
+
+      this.store.set(variable, "deleteId", id);
+    },
+    clearScheduledDeletion: function (variable) {
+      const poller = this.store.proxy[variable];
+      clearTimeout(poller.deleteId);
+      this.store.set(variable, "deleteId", undefined);
     },
   });
 }
