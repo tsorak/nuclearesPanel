@@ -1,7 +1,9 @@
 import { createEffect, createSignal, onCleanup } from "solid-js";
 import { useContextMenu } from "./ContextMenu.jsx";
+import { MultiOption } from "./AddTile.jsx";
+import { batch } from "solid-js";
 
-export default function Tile({ tilePointer, pollerStore, addToSection }) {
+export default function Tile({ tilePointer, pollerStore, storeHelper }) {
   const {
     varName,
     parse: parsePreset,
@@ -100,12 +102,16 @@ export default function Tile({ tilePointer, pollerStore, addToSection }) {
       onpointerenter={() => setEditingPollRate(true)}
       onpointerleave={() => setEditingPollRate(false)}
       onwheel={(ev) => ev.deltaY > 0 ? mutPollRate.dec() : mutPollRate.inc()}
-      oncontextmenu={cmenu.show(() => <ContextMenu {...{ tilePointer }} />)}
+      oncontextmenu={cmenu.show(() => (
+        <ContextMenu {...{ tilePointer, storeHelper }} />
+      ))}
     >
       <div class="relative flex flex-col items-center">
         <span
           class="absolute w-2 h-2 rounded-full -left-1 -top-1 leading-0 cursor-pointer text-center"
-          onclick={cmenu.show(() => <ContextMenu {...{ tilePointer }} />)}
+          onclick={cmenu.show(() => (
+            <ContextMenu {...{ tilePointer, storeHelper }} />
+          ))}
         >
           .
         </span>
@@ -132,20 +138,68 @@ export default function Tile({ tilePointer, pollerStore, addToSection }) {
 }
 
 function ContextMenu(props) {
-  const { tilePointer } = props;
+  const { tilePointer, storeHelper } = props;
 
   const {
     varName,
-    parse: parsePreset,
-    parserOverride,
-    title,
-    unit,
-    rate,
+    // parse: parsePreset,
+    // parserOverride,
+    // title,
+    // unit,
+    // rate,
   } = tilePointer();
 
+  let sectionForm;
+
+  const sections = storeHelper.getSections(varName);
+
+  onCleanup(() => {
+    const sectionDiff = getSectionFormData(sectionForm).diffWith(sections);
+
+    batch(() => {
+      for (const [section, enable] of sectionDiff) {
+        if (enable) {
+          storeHelper.addToSection(section, tilePointer);
+        } else {
+          storeHelper.removeFromSection(section, tilePointer);
+        }
+      }
+    });
+
+    console.log(sectionDiff);
+  });
+
   return (
-    <div class="bg-gray-500 rounded p-2 text-white">
-      <h6>{varName}</h6>
+    <div class="bg-gray-500 rounded p-2 text-white flex flex-col max-w-xs">
+      <form ref={sectionForm}>
+        <MultiOption
+          id="tileEditSection"
+          title="Panel Sections"
+          class="flex flex-wrap min-w-[12rem] gap-1"
+          options={sections.map((
+            [section, present],
+          ) => ({ value: section, checked: present }))}
+        />
+      </form>
     </div>
+  );
+}
+
+function getSectionFormData(elem) {
+  const newSectionData = Array.from(elem.querySelectorAll(
+    "[id*='tileEditSection']",
+  )).map((el) => [el.id.split("_")[1], el.checked ?? false]);
+
+  return {
+    newSectionData,
+    diffWith: sectionDiff,
+  };
+}
+
+function sectionDiff(oldState) {
+  oldState = Array.isArray(oldState) ? Object.fromEntries(oldState) : oldState;
+
+  return this.newSectionData.filter(([section, enabled]) =>
+    oldState[section] !== enabled
   );
 }

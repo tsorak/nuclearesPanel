@@ -24,7 +24,7 @@ function UserTiles(props) {
   return (
     <div class="flex flex-col gap-2">
       <Nav {...{ store, setStore, pollers }} />
-      <div class="flex flex-wrap gap-2 mx-auto max-w-xs md:max-w-2xl">
+      <div class="flex flex-wrap gap-2 mx-auto max-w-xs md:max-w-2xl lg:max-w-6xl">
         <Suspense>
           <For each={sections()}>
             {([section, tiles]) => {
@@ -41,7 +41,7 @@ function UserTiles(props) {
                         <Tile
                           tilePointer={tile}
                           pollerStore={pollers}
-                          addToSection={storeHelper.addToSection}
+                          storeHelper={storeHelper}
                         />
                       )}
                     </For>

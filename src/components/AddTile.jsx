@@ -2,17 +2,9 @@ import { createSignal } from "solid-js";
 
 import * as helper from "../helper/tile.js";
 
-export default function AddTile(props) {
-  const availableSections = [
-    "fuel",
-    "pressurizer",
-    "core",
-    "energy",
-    "steam",
-    "condenser",
-    "chemical",
-  ];
+import { SECTIONS } from "../constants.js";
 
+export default function AddTile(props) {
   const onsubmit = (ev) => {
     ev.preventDefault();
 
@@ -20,9 +12,7 @@ export default function AddTile(props) {
 
     const v = (el) => el.value;
     const getSections = () => {
-      return availableSections.map((s) =>
-        form[`section_${s}`].checked ? s : null
-      )
+      return SECTIONS.map((s) => form[`section_${s}`].checked ? s : null)
         .filter((v) => v !== null);
     };
 
@@ -163,7 +153,7 @@ function PresetInput(props) {
   );
 }
 
-function MultiOption(props) {
+export function MultiOption(props) {
   if (!props.options) {
     throw new Error("Missing prop 'options'");
   }
@@ -172,11 +162,26 @@ function MultiOption(props) {
     <div>
       <p class="select-none">{props.title}</p>
       <ul class={props.class ?? ""}>
-        {props.options.map((v) => (
-          <Checkbox key={v} id={`${props.id}_${v}`}>
-            {v}
-          </Checkbox>
-        ))}
+        {props.options.map((v) => {
+          if (typeof v === "string") {
+            return (
+              <Checkbox key={v} id={`${props.id}_${v}`}>
+                {v}
+              </Checkbox>
+            );
+          } else {
+            const { value, checked } = v;
+            return (
+              <Checkbox
+                key={value}
+                id={`${props.id}_${value}`}
+                {...{ checked }}
+              >
+                {value}
+              </Checkbox>
+            );
+          }
+        })}
       </ul>
     </div>
   );
@@ -185,7 +190,12 @@ function MultiOption(props) {
 function Checkbox(props) {
   return (
     <label for={props.id}>
-      <input type="checkbox" class="hidden peer" id={props.id} />
+      <input
+        type="checkbox"
+        class="hidden peer"
+        id={props.id}
+        checked={props.checked ?? false}
+      />
       <div class="rounded bg-gray-700 peer-checked:bg-green-600 cursor-pointer select-none px-2 py-1">
         {props.children}
       </div>
