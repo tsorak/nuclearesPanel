@@ -1,4 +1,5 @@
 import { createEffect, createSignal, onCleanup } from "solid-js";
+import { useContextMenu } from "./ContextMenu.jsx";
 
 export default function Tile({ tilePointer, pollerStore, addToSection }) {
   const {
@@ -91,18 +92,23 @@ export default function Tile({ tilePointer, pollerStore, addToSection }) {
     }
   };
 
+  const cmenu = useContextMenu();
+
   return (
     <div
       class="flex px-2 pt-2"
       onpointerenter={() => setEditingPollRate(true)}
       onpointerleave={() => setEditingPollRate(false)}
       onwheel={(ev) => ev.deltaY > 0 ? mutPollRate.dec() : mutPollRate.inc()}
-      oncontextmenu={(ev) => {
-        ev.preventDefault();
-        addToSection("pressurizer", tilePointer);
-      }}
+      oncontextmenu={cmenu.show(() => <ContextMenu {...{ tilePointer }} />)}
     >
       <div class="relative flex flex-col items-center">
+        <span
+          class="absolute w-2 h-2 rounded-full -left-1 -top-1 leading-0 cursor-pointer text-center"
+          onclick={cmenu.show(() => <ContextMenu {...{ tilePointer }} />)}
+        >
+          .
+        </span>
         <span class="text-[8pt] leading-0">
           {pollRateHumanFormat()}
         </span>
@@ -121,6 +127,25 @@ export default function Tile({ tilePointer, pollerStore, addToSection }) {
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ContextMenu(props) {
+  const { tilePointer } = props;
+
+  const {
+    varName,
+    parse: parsePreset,
+    parserOverride,
+    title,
+    unit,
+    rate,
+  } = tilePointer();
+
+  return (
+    <div class="bg-gray-500 rounded p-2 text-white">
+      <h6>{varName}</h6>
     </div>
   );
 }
