@@ -1,4 +1,3 @@
-import { Suspense } from "solid-js";
 import UserTiles from "../components/UserTiles.jsx";
 
 export default function Home() {

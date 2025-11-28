@@ -3,7 +3,11 @@ import { useContextMenu } from "./ContextMenu.jsx";
 import { MultiOption } from "./AddTile.jsx";
 import { batch } from "solid-js";
 
-export default function Tile({ tilePointer, pollerStore, storeHelper }) {
+import * as rg from "./displays/RadialGauge.jsx";
+
+export default function Tile(
+  { tilePointer, pollerStore, storeHelper, currentSection },
+) {
   const {
     varName,
     parse: parsePreset,
@@ -11,6 +15,7 @@ export default function Tile({ tilePointer, pollerStore, storeHelper }) {
     title,
     unit,
     rate,
+    displays,
   } = tilePointer();
 
   const poller = pollerStore.subscribe({
@@ -19,6 +24,27 @@ export default function Tile({ tilePointer, pollerStore, storeHelper }) {
     parsePreset,
     parserOverride,
   });
+
+  const gaugeValue = () => poller.value.latest / 1;
+
+  // const display = [rg.createProps(
+  //   0,
+  //   600,
+  //   gaugeValue,
+  //   [
+  //     [0, 120, "#f009"],
+  //     [120, 240, "#ff09"],
+  //     [240, 360, "#0f09"],
+  //     [360, 480, "#ff09"],
+  //     [480, 600, "#f009"],
+  //   ],
+  //   "L x100",
+  //   true,
+  // )];
+  //
+  // const [currentDisplay, setCurrentDisplay] = createSignal(
+  //   display.length > 0 ? 0 : null,
+  // );
 
   let lastRate = rate.get();
   const [editingPollRate, setEditingPollRate] = createSignal(false);
@@ -102,35 +128,47 @@ export default function Tile({ tilePointer, pollerStore, storeHelper }) {
       onpointerenter={() => setEditingPollRate(true)}
       onpointerleave={() => setEditingPollRate(false)}
       onwheel={(ev) => ev.deltaY > 0 ? mutPollRate.dec() : mutPollRate.inc()}
-      oncontextmenu={cmenu.show(() => (
-        <ContextMenu {...{ tilePointer, storeHelper }} />
-      ))}
     >
-      <div class="relative flex flex-col items-center">
-        <span
-          class="absolute w-2 h-2 rounded-full -left-1 -top-1 leading-0 cursor-pointer text-center"
-          onclick={cmenu.show(() => (
+      <div class="flex flex-col">
+        <div
+          class="relative flex flex-col items-center"
+          oncontextmenu={cmenu.show(() => (
             <ContextMenu {...{ tilePointer, storeHelper }} />
           ))}
         >
-          .
-        </span>
-        <span class="text-[8pt] leading-0">
-          {pollRateHumanFormat()}
-        </span>
-        <span
-          class="absolute w-2 h-2 rounded-full -right-1 -top-1"
-          style={{ "background": pollerStatusBg() }}
-          onclick={pollerToggle}
+          <span
+            class="absolute w-2 h-2 rounded-full -left-1 -top-1 leading-0 cursor-pointer text-center"
+            onclick={cmenu.show(() => (
+              <ContextMenu {...{ tilePointer, storeHelper }} />
+            ))}
+          >
+            .
+          </span>
+          <span class="text-[8pt] leading-0">
+            {pollRateHumanFormat()}
+          </span>
+          <span
+            class="absolute w-2 h-2 rounded-full -right-1 -top-1"
+            style={{ "background": pollerStatusBg() }}
+            onclick={pollerToggle}
+          >
+          </span>
+          <h6>
+            {title}
+          </h6>
+        </div>
+        <div
+          oncontextmenu={cmenu.show(() => <p>lul</p>)}
         >
-        </span>
-        <h6>
-          {title}
-        </h6>
-        <div class="bg-black w-full flex justify-center">
-          <p class="flex gap-1 text-yellow-400 font-mono">
-            {displayValue()}
-          </p>
+          {displays.current.forSection(currentSection) !== null
+            ? <rg.default {...displays.v.get()[displays.current.get()]} />
+            : (
+              <div class="bg-black w-full flex justify-center self-stretch">
+                <p class="flex gap-1 text-yellow-400 font-mono">
+                  {displayValue()}
+                </p>
+              </div>
+            )}
         </div>
       </div>
     </div>

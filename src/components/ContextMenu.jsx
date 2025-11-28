@@ -70,7 +70,7 @@ function Presenter(_props) {
  * @param {T} initialValue
  * @returns {{get: () => T, set: (v: T) => void | (cb: (p: T) => T) => void}}
  */
-function createObjSignal(initialValue, opts = {}) {
+export function createObjSignal(initialValue, opts = {}) {
   const [get, set] = createSignal(initialValue, opts);
   return { get, set };
 }

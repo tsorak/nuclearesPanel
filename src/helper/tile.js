@@ -1,4 +1,8 @@
-import { batch, createSignal } from "solid-js";
+import { batch } from "solid-js";
+import { createObjSignal } from "../components/ContextMenu.jsx";
+import { createStore } from "solid-js/store";
+
+import { useDisplayPresetsContext } from "../DisplayPreset.jsx";
 
 export function validTile({ varName, title, unit, parse, rate, sections }) {
   if (!varName) throw new Error("Tile must contain a Variable to poll");
@@ -55,29 +59,36 @@ export function tileToStoreStructure(arg, opts) {
   }
 
   const [tiles, sections] = array.map(
-    ({ varName, title, unit, parse, rate, parserOverride, sections }) => {
-      const [r, setRate] = createSignal(rate);
+    (obj) => {
+      const { varName, title, unit, parse, rate, parserOverride, sections } =
+        obj;
+      const displays = createObjSignal(obj.displays ?? []);
+      const [getCD, setCD] = createStore(obj.currentDisplay ?? {});
+
+      const rateSignal = createObjSignal(rate);
 
       const pointer = () => ({
         varName,
         title,
         unit,
         parse,
-        rate: { get: r, set: setRate },
-        drop: function (setStore) {
-          setStore((p) => {
-            const u = p;
-            for (const sec of p.tiles[this.varName].sections) {
-              u.sections[sec] = p.sections[sec].filter((p) => p !== ptr);
-            }
+        displays: {
+          current: {
+            get: getCD,
+            set: setCD,
+            forSection: (sec) => {
+              const displayPreset = getCD[sec];
+              if (!displayPreset) return null;
 
-            delete u.tiles[this.varName];
-            return u;
-          });
+              const dpctx = useDisplayPresetsContext();
+              dpctx.storage;
+              //TODO: storage should not be reactive? users of the same display in different sections should not edit the preset for the both of them.
+            },
+          },
+          v: displays,
         },
+        rate: rateSignal,
       });
-
-      const ptr = pointer;
 
       return [
         [varName, { pointer, sections }],

@@ -29,7 +29,7 @@ function UserTiles(props) {
           <For each={sections()}>
             {([section, tiles]) => {
               return (
-                <div class="min-w-xs">
+                <div class="min-w-xs resize-x overflow-auto">
                   <div class="warning-stripes flex justify-center">
                     <h5 class="bg-black text-white font-mono uppercase px-2 leading-6">
                       {section}
@@ -42,6 +42,7 @@ function UserTiles(props) {
                           tilePointer={tile}
                           pollerStore={pollers}
                           storeHelper={storeHelper}
+                          currentSection={section}
                         />
                       )}
                     </For>
@@ -99,6 +100,7 @@ const persistStore = {
             unit,
             parse,
             rate,
+            displays,
           } = pointer();
 
           return {
@@ -108,6 +110,8 @@ const persistStore = {
             parse,
             rate: rate.get(),
             sections,
+            displays: displays.v.get(),
+            currentDisplay: displays.current.get(),
           };
         },
       );
