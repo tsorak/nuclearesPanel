@@ -51,6 +51,10 @@ export function createStoreHelper(store, setStore) {
           }
         });
       }
+      if (store.tiles[t.varName].sections.length === 0) {
+        setStore("tiles", t.varName, undefined);
+        console.log(store);
+      }
     });
   };
 
