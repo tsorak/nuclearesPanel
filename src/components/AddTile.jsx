@@ -111,16 +111,23 @@ export default function AddTile(props) {
   );
 }
 
-function Input(props) {
+export function Input(props) {
   return (
-    <label for={props.title} class="border-b border-dashed">
+    <label for={props.title} class="border-b border-dashed flex flex-col">
       <p class="select-none">{props.title}</p>
-      <input type={props.type ?? "text"} id={props.title} class="min-w-0" />
+      <input
+        {...props}
+        type={props.type ?? "text"}
+        id={props.title}
+        class="min-w-0"
+        name={props.name ?? null}
+        value={props.value ?? null}
+      />
     </label>
   );
 }
 
-function PresetInput(props) {
+export function PresetInput(props) {
   const [v, setV] = createSignal(props.default ?? "");
 
   if (!props.presets) {
@@ -139,6 +146,7 @@ function PresetInput(props) {
           }}
           value={v()}
           class="min-w-0"
+          name={props.title ?? props.name ?? null}
         />
         <select
           onchange={(ev) => setV(ev.target.value)}
@@ -187,7 +195,7 @@ export function MultiOption(props) {
   );
 }
 
-function Checkbox(props) {
+export function Checkbox(props) {
   return (
     <label for={props.id}>
       <input
@@ -195,6 +203,7 @@ function Checkbox(props) {
         class="hidden peer"
         id={props.id}
         checked={props.checked ?? false}
+        name={props.name ?? null}
       />
       <div class="rounded bg-gray-700 peer-checked:bg-green-600 cursor-pointer select-none px-2 py-1">
         {props.children}

@@ -103,6 +103,10 @@ const persistStore = {
             displays,
           } = pointer();
 
+          const displayPresetNames = Object.entries(displays.get).map((
+            [sec, { presetName }],
+          ) => [sec, presetName]);
+
           return {
             varName,
             title,
@@ -110,8 +114,7 @@ const persistStore = {
             parse,
             rate: rate.get(),
             sections,
-            displays: displays.v.get(),
-            currentDisplay: displays.current.get(),
+            displays: Object.fromEntries(displayPresetNames),
           };
         },
       );
@@ -119,8 +122,10 @@ const persistStore = {
       return tiles;
     })();
 
-    const str = JSON.stringify(tiles);
-    localStorage.setItem("store", str);
+    console.log(tiles);
+
+    // const str = JSON.stringify(tiles);
+    // localStorage.setItem("store", str);
   },
   load: () => {
     const storeData = localStorage.getItem("store");

@@ -2,7 +2,7 @@ import { batch } from "solid-js";
 import { createObjSignal } from "../components/ContextMenu.jsx";
 import { createStore } from "solid-js/store";
 
-import { useDisplayPresetsContext } from "../DisplayPreset.jsx";
+import { loadDisplays } from "../DisplayPreset.jsx";
 
 export function validTile({ varName, title, unit, parse, rate, sections }) {
   if (!varName) throw new Error("Tile must contain a Variable to poll");
@@ -62,8 +62,10 @@ export function tileToStoreStructure(arg, opts) {
     (obj) => {
       const { varName, title, unit, parse, rate, parserOverride, sections } =
         obj;
-      const displays = createObjSignal(obj.displays ?? []);
-      const [getCD, setCD] = createStore(obj.currentDisplay ?? {});
+      // const displays = createObjSignal(obj.displays ?? []);
+
+      // {presetName:"steamgenvol", ... }
+      const [getCD, setCD] = createStore(loadDisplays(obj.displays) ?? {});
 
       const rateSignal = createObjSignal(rate);
 
@@ -73,19 +75,17 @@ export function tileToStoreStructure(arg, opts) {
         unit,
         parse,
         displays: {
-          current: {
-            get: getCD,
-            set: setCD,
-            forSection: (sec) => {
-              const displayPreset = getCD[sec];
-              if (!displayPreset) return null;
-
-              const dpctx = useDisplayPresetsContext();
-              dpctx.storage;
-              //TODO: storage should not be reactive? users of the same display in different sections should not edit the preset for the both of them.
-            },
+          get: getCD,
+          set: setCD,
+          hasSection: (sec) => !!getCD[sec],
+          getSection: (sec) => {
+            const displayPreset = getCD[sec];
+            return displayPreset ? displayPreset : null;
+            //TODO: storage should not be reactive? users of the same display in different sections should not edit the preset for the both of them.
           },
-          v: displays,
+          updateSection: (sec, presetData) => {
+            setCD(sec, presetData);
+          },
         },
         rate: rateSignal,
       });

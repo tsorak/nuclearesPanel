@@ -56,7 +56,7 @@ function Presenter(_props) {
       id="contextmenucloser"
       class="absolute w-screen h-screen z-1000"
       style={{ "pointer-events": !open() ? "none" : null }}
-      onclick={(ev) => {
+      onpointerdown={(ev) => {
         if (ev.target.id !== "contextmenucloser") return;
         cmenu.shownElem.set(null);
       }}

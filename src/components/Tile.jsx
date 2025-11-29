@@ -4,6 +4,8 @@ import { MultiOption } from "./AddTile.jsx";
 import { batch } from "solid-js";
 
 import * as rg from "./displays/RadialGauge.jsx";
+import DisplayEditor from "./displays/Editor.jsx";
+import { dpLocalStorage } from "../DisplayPreset.jsx";
 
 export default function Tile(
   { tilePointer, pollerStore, storeHelper, currentSection },
@@ -158,10 +160,15 @@ export default function Tile(
           </h6>
         </div>
         <div
-          oncontextmenu={cmenu.show(() => <p>lul</p>)}
+          oncontextmenu={cmenu.show(() => (
+            <DisplayEditor
+              {...{ section: currentSection }}
+              currentDisplay={displays.getSection(currentSection)}
+            />
+          ))}
         >
-          {displays.current.forSection(currentSection) !== null
-            ? <rg.default {...displays.v.get()[displays.current.get()]} />
+          {displays.hasSection(currentSection)
+            ? <rg.default {...displays.getSection(currentSection)} />
             : (
               <div class="bg-black w-full flex justify-center self-stretch">
                 <p class="flex gap-1 text-yellow-400 font-mono">
@@ -203,8 +210,6 @@ function ContextMenu(props) {
         }
       }
     });
-
-    console.log(sectionDiff);
   });
 
   return (
