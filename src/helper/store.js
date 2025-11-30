@@ -1,5 +1,6 @@
 import { batch } from "solid-js";
 import { SECTIONS } from "../constants.js";
+import { dpLocalStorage } from "../DisplayPreset.jsx";
 
 export function createStoreHelper(store, setStore) {
   const addToSection = (section, pointer) => {
@@ -72,4 +73,34 @@ export function createStoreHelper(store, setStore) {
       );
     },
   };
+}
+
+export function rescueDisplay(obj) {
+  console.warn(
+    "Programming error, no presetId present. Please save your config:",
+    obj,
+  );
+  if (localStorage["RESCUE"]) {
+    const arr = JSON.parse(localStorage.getItem("RESCUE"));
+    arr.push(obj);
+    try {
+      localStorage.setItem("RESCUE", JSON.stringify(arr));
+    } catch (_e) {
+      //
+    }
+  } else {
+    try {
+      localStorage.setItem("RESCUE", JSON.stringify([obj]));
+    } catch (_e) {
+      //
+    }
+  }
+}
+
+export function saveDisplay(obj) {
+  if (obj.presetName) {
+    dpLocalStorage.set(obj.presetName, obj);
+  } else {
+    dpLocalStorage.setUnnamed(obj.presetId, obj);
+  }
 }

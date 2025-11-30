@@ -6,18 +6,26 @@ import { unwrap } from "solid-js/store";
 const DISPLAY_TYPES = ["radial", "7seg"];
 
 export default function Editor(props) {
-  const { section, currentDisplay, updateSection } = props;
+  const { section, displays } = props;
+
+  const [presetId, setPresetId] = createSignal(
+    displays[section]?.presetId ?? crypto.randomUUID(),
+  );
+  const [presetName, setPresetName] = createSignal(
+    displays[section]?.presetName ?? null,
+  );
 
   const [addType, setAddType] = createSignal("radial");
-  // const [presetBody, setPresetBody] = createSignal({}, { equals: false });
 
   const applyToCurrentSection = (data) => {
-    console.log("current", currentDisplay, "new", data);
-    updateSection(section, (p) => {
+    const identifiers = { presetId: presetId() };
+    if (presetName()) identifiers.presetName = presetName();
+
+    displays.updateSection(section, (p) => {
       if (p) {
-        return { ...p, ...data };
+        return { ...p, ...data, ...identifiers };
       } else {
-        return data;
+        return { ...data, ...identifiers };
       }
     });
   };
@@ -44,15 +52,17 @@ export default function Editor(props) {
       </div>
       <Switch>
         <Match when={addType() === "radial"}>
-          <RadialForm {...{ applyToCurrentSection, default: currentDisplay }} />
+          <RadialForm
+            {...{
+              applyToCurrentSection,
+              default: displays.getSection(section),
+            }}
+          />
         </Match>
       </Switch>
-      {/* <PresetSaver {...{ presetBody, section }} /> */}
+      {/* <PresetSaver {...{ section, displays }} /> */}
     </div>
   );
-}
-
-function diffRadialChanges() {
 }
 
 function RadialForm(props) {
@@ -208,7 +218,7 @@ function RadialForm(props) {
 }
 
 function PresetSaver(props) {
-  const { section, presetBody } = props;
+  const { section, displays } = props;
 
   return (
     <div class="mb-2">

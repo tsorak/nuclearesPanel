@@ -64,7 +64,12 @@ export function tileToStoreStructure(arg, opts) {
         obj;
       // const displays = createObjSignal(obj.displays ?? []);
 
-      // {presetName:"steamgenvol", ... }
+      // {presetName:string|null, presetId:uuid, ... }
+      // A preset should always have a uuid.
+      // If a display preset is initially created without a name,
+      // it is saved in localstorage based on the uuid.
+      // Both named and unnamed should be shown separately.
+      // Unnamed ones can be named. When they get a name remove the unnamed uuid from localstorage
       const [getCD, setCD] = createStore(loadDisplays(obj.displays) ?? {});
 
       const rateSignal = createObjSignal(rate);

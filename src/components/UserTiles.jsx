@@ -6,7 +6,11 @@ import Tile from "./Tile.jsx";
 import AddTile from "./AddTile.jsx";
 import * as pollerHelper from "../helper/poller.js";
 import * as tileHelper from "../helper/tile.js";
-import { createStoreHelper } from "../helper/store.js";
+import {
+  createStoreHelper,
+  rescueDisplay,
+  saveDisplay,
+} from "../helper/store.js";
 import PollerActiveControls from "./PollerActiveControls.jsx";
 
 export default clientOnly(async () => ({ default: UserTiles }), { lazy: true });
@@ -20,6 +24,10 @@ function UserTiles(props) {
   const sections = () => {
     return Array.from(Object.entries(store.sections));
   };
+
+  globalThis.addEventListener("beforeunload", () => {
+    persistStore.save(store);
+  });
 
   return (
     <div class="flex flex-col gap-2">
@@ -104,8 +112,16 @@ const persistStore = {
           } = pointer();
 
           const displayPresetNames = Object.entries(displays.get).map((
-            [sec, { presetName }],
-          ) => [sec, presetName ?? null]).filter(([_, v]) => v !== null);
+            [sec, obj],
+          ) => {
+            const { presetName, presetId } = obj;
+            if (!presetId) {
+              rescueDisplay(obj);
+              return null;
+            }
+            saveDisplay(obj);
+            return [sec, presetName ? { presetName } : { presetId }];
+          }).filter(([_, v]) => v !== null);
 
           return {
             varName,
@@ -124,8 +140,8 @@ const persistStore = {
 
     console.log(tiles);
 
-    // const str = JSON.stringify(tiles);
-    // localStorage.setItem("store", str);
+    const str = JSON.stringify(tiles);
+    localStorage.setItem("store", str);
   },
   load: () => {
     const storeData = localStorage.getItem("store");

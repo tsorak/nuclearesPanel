@@ -38,11 +38,6 @@ function RadialGauge(props) {
 
   let el;
 
-  const formattedValue = () =>
-    typeof props.value.latest === "number"
-      ? store.valueMult * props.value.latest
-      : "ERROR";
-
   onMount(() => {
     let gauge = {};
 

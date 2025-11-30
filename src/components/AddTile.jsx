@@ -21,7 +21,7 @@ export default function AddTile(props) {
       title: v(form["Title"]) ?? v(form["Variable"]),
       unit: v(form["Unit"]) ?? "",
       parse: v(form["Parser Preset"]),
-      rate: v(form["Polling Interval"]),
+      rate: Number(v(form["Polling Interval"])),
       sections: getSections(),
     };
 

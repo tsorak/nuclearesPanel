@@ -27,26 +27,7 @@ export default function Tile(
     parserOverride,
   });
 
-  const gaugeValue = () => poller.value.latest / 1;
-
-  // const display = [rg.createProps(
-  //   0,
-  //   600,
-  //   gaugeValue,
-  //   [
-  //     [0, 120, "#f009"],
-  //     [120, 240, "#ff09"],
-  //     [240, 360, "#0f09"],
-  //     [360, 480, "#ff09"],
-  //     [480, 600, "#f009"],
-  //   ],
-  //   "L x100",
-  //   true,
-  // )];
-  //
-  // const [currentDisplay, setCurrentDisplay] = createSignal(
-  //   display.length > 0 ? 0 : null,
-  // );
+  console.log(JSON.stringify(displays.get));
 
   let lastRate = rate.get();
   const [editingPollRate, setEditingPollRate] = createSignal(false);
@@ -124,12 +105,6 @@ export default function Tile(
 
   const cmenu = useContextMenu();
 
-  const display = () => displays.get[currentSection] ?? null;
-
-  createEffect(() => {
-    console.log(JSON.stringify(displays.get));
-  });
-
   return (
     <div
       class="flex px-2 pt-2"
@@ -170,9 +145,8 @@ export default function Tile(
             <DisplayEditor
               {...{
                 section: currentSection,
-                updateSection: displays.updateSection,
+                displays,
               }}
-              currentDisplay={displays.getSection(currentSection)}
             />
           ))}
           class="flex justify-center"
