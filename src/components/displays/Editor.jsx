@@ -9,10 +9,10 @@ export default function Editor(props) {
   const { section, displays } = props;
 
   const [presetId, setPresetId] = createSignal(
-    displays[section]?.presetId ?? crypto.randomUUID(),
+    displays.get[section]?.presetId ?? crypto.randomUUID(),
   );
   const [presetName, setPresetName] = createSignal(
-    displays[section]?.presetName ?? null,
+    displays.get[section]?.presetName ?? null,
   );
 
   const [addType, setAddType] = createSignal("radial");
@@ -86,6 +86,8 @@ function RadialForm(props) {
     configOverride: props?.default?.configOverride ?? {},
   };
 
+  let form;
+
   const [highlights, setHighlights] = createSignal(
     unwrap(props?.default?.highlights) ?? [],
     {
@@ -126,6 +128,7 @@ function RadialForm(props) {
     <form
       onsubmit={onsubmit}
       class="flex flex-col gap-2"
+      ref={form}
     >
       <Input type="number" title="Minimum Value" name="min" value={min} />
       <Input type="number" title="Maximum Value" name="max" value={max} />
@@ -193,7 +196,11 @@ function RadialForm(props) {
                 prevItem !== null ? p[prevItem][1] : min;
 
               const u = p;
-              u.push([prevHighlightMaxOrGlobalMin(), max, "#0000"]);
+              u.push([
+                prevHighlightMaxOrGlobalMin(),
+                Number(new FormData(form).get("max") ?? max),
+                "#f009",
+              ]);
               return u;
             })}
         >

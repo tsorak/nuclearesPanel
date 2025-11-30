@@ -138,7 +138,7 @@ const persistStore = {
       return tiles;
     })();
 
-    console.log(tiles);
+    // console.log(tiles);
 
     const str = JSON.stringify(tiles);
     localStorage.setItem("store", str);

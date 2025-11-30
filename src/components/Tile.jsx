@@ -27,8 +27,6 @@ export default function Tile(
     parserOverride,
   });
 
-  console.log(JSON.stringify(displays.get));
-
   let lastRate = rate.get();
   const [editingPollRate, setEditingPollRate] = createSignal(false);
 
