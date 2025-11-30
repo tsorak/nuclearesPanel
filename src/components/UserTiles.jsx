@@ -105,7 +105,7 @@ const persistStore = {
 
           const displayPresetNames = Object.entries(displays.get).map((
             [sec, { presetName }],
-          ) => [sec, presetName]);
+          ) => [sec, presetName ?? null]).filter(([_, v]) => v !== null);
 
           return {
             varName,

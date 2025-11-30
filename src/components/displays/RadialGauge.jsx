@@ -32,108 +32,98 @@ export function createProps(
 }
 
 function RadialGauge(props) {
-  const {
-    min,
-    max,
-    value,
-    highlights,
-    unit,
-    valueBox,
-    size,
-    configOverride,
-  } = {
-    min: props.min ?? 0,
-    max: props.max ?? 100,
-    value: props.value ?? (() => 0),
-    highlights: parseHighlights(props),
-    unit: props.unit ?? "",
-    valueBox: props.valueBox ?? false,
-    size: props.size ?? 96,
-    configOverride: props.configOverride ?? {},
-  };
+  const store = props.store;
+
+  const highlights = () => parseHighlights(store.highlights);
 
   let el;
 
+  const formattedValue = () =>
+    typeof props.value.latest === "number"
+      ? store.valueMult * props.value.latest
+      : "ERROR";
+
   onMount(() => {
-    // https://canvas-gauges.com/documentation/user-guide/configuration
-    const gauge = new cg.RadialGauge({
-      borders: false,
-      valueBox,
-      valueBoxStroke: 0,
-      barWidth: 0,
-      barStrokeWidth: 0,
-      fontUnitsSize: 28,
-      fontNumbersSize: -8,
-      fontValueSize: 40,
-      // startAngle: 75,
-      // ticksAngle: 210,
-      //
-      renderTo: el,
-      width: size,
-      height: size,
-      units: unit,
-      title: false,
-      value: 0,
-      minValue: min,
-      maxValue: max,
-      majorTicks: [
-        min,
-        max / 2,
-        max,
-      ],
-      minorTicks: 30,
-      strokeTicks: false,
-      highlights,
-      // Steam gen Volume config:
-      // highlights: [
-      //   { from: 0, to: 120, color: "#f009" },
-      //   { from: 120, to: 240, color: "#ff09" },
-      //   { from: 240, to: 360, color: "#0f09" },
-      //   { from: 360, to: 480, color: "#ff09" },
-      //   { from: 480, to: 600, color: "#f009" },
-      // ],
-      colorPlate: "#222",
-      colorMajorTicks: "#f5f5f5",
-      colorMinorTicks: "#ddd",
-      colorTitle: "#fff",
-      colorUnits: "#ccc",
-      colorNumbers: "#eee",
-      colorNeedle: "rgba(240, 128, 128, 1)",
-      colorNeedleEnd: "rgba(255, 160, 122, .9)",
-      colorValueText: "#eee",
-      colorValueBoxBackground: "#0000",
-      animationRule: "bounce",
-      animationDuration: 250,
-      ...configOverride,
+    let gauge = {};
+
+    // we need to effect here to redraw when any store value changes.
+    createEffect(() => {
+      // https://canvas-gauges.com/documentation/user-guide/configuration
+      gauge = new cg.RadialGauge({
+        borders: false,
+        valueBox: store.valueBox,
+        valueBoxStroke: 0,
+        barWidth: 0,
+        barStrokeWidth: 0,
+        fontUnitsSize: 28,
+        fontNumbersSize: -8,
+        fontValueSize: 40,
+        // startAngle: 75,
+        // ticksAngle: 210,
+        //
+        renderTo: el,
+        width: store.size,
+        height: store.size,
+        units: store.unit,
+        title: false,
+        value: store.min,
+        minValue: store.min,
+        maxValue: store.max,
+        majorTicks: [
+          store.min,
+          store.max - ((store.max - store.min) / 2),
+          store.max,
+        ],
+        minorTicks: 30,
+        strokeTicks: false,
+        highlights: highlights(),
+        // Steam gen Volume config:
+        // highlights: [
+        //   { from: 0, to: 120, color: "#f009" },
+        //   { from: 120, to: 240, color: "#ff09" },
+        //   { from: 240, to: 360, color: "#0f09" },
+        //   { from: 360, to: 480, color: "#ff09" },
+        //   { from: 480, to: 600, color: "#f009" },
+        // ],
+        colorPlate: "#222",
+        colorMajorTicks: "#f5f5f5",
+        colorMinorTicks: "#ddd",
+        colorTitle: "#fff",
+        colorUnits: "#ccc",
+        colorNumbers: "#eee",
+        colorNeedle: "rgba(240, 128, 128, 1)",
+        colorNeedleEnd: "rgba(255, 160, 122, .9)",
+        colorValueText: "#eee",
+        colorValueBoxBackground: "#0000",
+        animationRule: "bounce",
+        animationDuration: 250,
+        ...store.configOverride,
+      });
+      gauge.draw();
     });
-    gauge.draw();
 
     createEffect(() => {
-      gauge.value = value();
+      gauge.value = store.valueMult * props.value.latest;
     });
   });
 
-  return (
-    <>
-      <canvas ref={el} />
-    </>
-  );
+  return <canvas ref={el} />;
 }
 
-function parseHighlights(props) {
-  if (!props.highlights) {
-    props.highlights = [
+function parseHighlights(highlights) {
+  if (!highlights) {
+    highlights = [
       [0, 33, "#0f09"],
       [33, 66, "#ff09"],
       [66, 100, "#f009"],
     ];
   }
-  if (Array.isArray(props.highlights[0])) {
-    return props.highlights.map(([from, to, color]) => ({
+  if (Array.isArray(highlights[0])) {
+    return highlights.map(([from, to, color]) => ({
       from,
       to,
       color,
     }));
   }
-  return props.highlights;
+  return highlights;
 }

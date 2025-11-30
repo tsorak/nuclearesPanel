@@ -1,4 +1,4 @@
-import { createEffect, createSignal, onCleanup } from "solid-js";
+import { createEffect, createSignal, onCleanup, Show } from "solid-js";
 import { useContextMenu } from "./ContextMenu.jsx";
 import { MultiOption } from "./AddTile.jsx";
 import { batch } from "solid-js";
@@ -124,6 +124,12 @@ export default function Tile(
 
   const cmenu = useContextMenu();
 
+  const display = () => displays.get[currentSection] ?? null;
+
+  createEffect(() => {
+    console.log(JSON.stringify(displays.get));
+  });
+
   return (
     <div
       class="flex px-2 pt-2"
@@ -162,20 +168,32 @@ export default function Tile(
         <div
           oncontextmenu={cmenu.show(() => (
             <DisplayEditor
-              {...{ section: currentSection }}
+              {...{
+                section: currentSection,
+                updateSection: displays.updateSection,
+              }}
               currentDisplay={displays.getSection(currentSection)}
             />
           ))}
+          class="flex justify-center"
         >
-          {displays.hasSection(currentSection)
-            ? <rg.default {...displays.getSection(currentSection)} />
-            : (
+          <Show
+            when={displays.get[currentSection] ?? null}
+            fallback={
               <div class="bg-black w-full flex justify-center self-stretch">
                 <p class="flex gap-1 text-yellow-400 font-mono">
                   {displayValue()}
                 </p>
               </div>
-            )}
+            }
+          >
+            <rg.default
+              {...{
+                store: displays.get[currentSection],
+                value: poller.value,
+              }}
+            />
+          </Show>
         </div>
       </div>
     </div>

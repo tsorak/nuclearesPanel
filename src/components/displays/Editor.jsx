@@ -1,6 +1,7 @@
 import { createSignal, For, Match, Show, Switch } from "solid-js";
 import { Checkbox, Input, PresetInput } from "../AddTile.jsx";
 import { dpLocalStorage } from "../../DisplayPreset.jsx";
+import { unwrap } from "solid-js/store";
 
 const DISPLAY_TYPES = ["radial", "7seg"];
 
@@ -8,11 +9,17 @@ export default function Editor(props) {
   const { section, currentDisplay, updateSection } = props;
 
   const [addType, setAddType] = createSignal("radial");
-  const [presetBody, setPresetBody] = createSignal({}, { equals: false });
+  // const [presetBody, setPresetBody] = createSignal({}, { equals: false });
 
   const applyToCurrentSection = (data) => {
     console.log("current", currentDisplay, "new", data);
-    // updateSection(section, (p) => )
+    updateSection(section, (p) => {
+      if (p) {
+        return { ...p, ...data };
+      } else {
+        return data;
+      }
+    });
   };
 
   return (
@@ -40,7 +47,7 @@ export default function Editor(props) {
           <RadialForm {...{ applyToCurrentSection, default: currentDisplay }} />
         </Match>
       </Switch>
-      <PresetSaver {...{ presetBody, section }} />
+      {/* <PresetSaver {...{ presetBody, section }} /> */}
     </div>
   );
 }
@@ -70,7 +77,7 @@ function RadialForm(props) {
   };
 
   const [highlights, setHighlights] = createSignal(
-    props?.default?.highlights ?? [],
+    unwrap(props?.default?.highlights) ?? [],
     {
       equals: false,
     },
@@ -96,13 +103,13 @@ function RadialForm(props) {
       min: Number(d.min),
       max: Number(d.max),
       valueMult: Number(d.valueMult),
-      highlights: highlights(),
+      highlights: structuredClone(highlights()),
       unit: d.unit,
       valueBox: d.valueBox ? true : false,
       size: Number(d.size),
     };
 
-    console.log(data);
+    props.applyToCurrentSection(data);
   };
 
   return (
@@ -113,7 +120,7 @@ function RadialForm(props) {
       <Input type="number" title="Minimum Value" name="min" value={min} />
       <Input type="number" title="Maximum Value" name="max" value={max} />
       <Input
-        type="number"
+        type="text"
         title="Value Multiplier"
         name="valueMult"
         value={valueMult}
