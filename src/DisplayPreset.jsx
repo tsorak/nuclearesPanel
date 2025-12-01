@@ -1,9 +1,16 @@
 export const dpLocalStorage = {
   allKeys: () => {
+    return Object.keys(localStorage).filter((k) => {
+      return k.startsWith("DISPLAY_PRESET_") ||
+        k.startsWith("UNNAMED_DISPLAY_PRESET_");
+    }).map((k) => removeDPConstantFromString(k));
+  },
+  allNamedKeys: () => {
     return Object.keys(localStorage).filter((k) =>
       k.startsWith("DISPLAY_PRESET_")
     ).map((k) => removeDPConstantFromString(k));
   },
+
   get: (name) => {
     if (!name) return null;
     const v = localStorage.getItem(`DISPLAY_PRESET_${name}`);
@@ -48,7 +55,7 @@ export const dpLocalStorage = {
 };
 
 function removeDPConstantFromString(s) {
-  return s.split("_").splice(1).join("_");
+  return s.split("PRESET_").splice(1).join("_");
 }
 
 export function loadDisplays(displays) {

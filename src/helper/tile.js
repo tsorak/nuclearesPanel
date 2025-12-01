@@ -91,6 +91,9 @@ export function tileToStoreStructure(arg, opts) {
           updateSection: (sec, presetData) => {
             setCD(sec, presetData);
           },
+          unassignSection: (sec) => {
+            setCD(sec, undefined);
+          },
         },
         rate: rateSignal,
       });

@@ -146,7 +146,7 @@ export default function Tile(
                 displays,
               }}
             />
-          ))}
+          ), { align: "bottomLeft" })}
           class="flex justify-center"
         >
           <Show

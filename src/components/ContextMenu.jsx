@@ -4,10 +4,19 @@ import { createContext } from "solid-js";
 
 const o = {
   shownElem: createObjSignal(null, { equals: false }),
-  show: function (menu) {
+  show: function (menu, cfg) {
+    const getAlign = (ev) => {
+      if (cfg?.align === "bottomLeft") {
+        const pos = ev.target.getBoundingClientRect();
+        return { clientX: pos.left, clientY: pos.top + pos.height };
+      } else {
+        return { clientX: ev.clientX, clientY: ev.clientY };
+      }
+    };
+
     return (ev) => {
       ev.preventDefault();
-      const { clientX, clientY } = ev;
+      const { clientX, clientY } = getAlign(ev);
       this.shownElem.set({ clientX, clientY, menu });
     };
   },

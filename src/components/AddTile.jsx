@@ -137,7 +137,7 @@ export function PresetInput(props) {
   return (
     <label for={props.title} class="border-b border-dashed">
       <p class="select-none">{props.title}</p>
-      <div class="flex">
+      <div class="grid grid-cols-[1fr_64px]">
         <input
           type={props.type ?? "text"}
           id={props.title}
@@ -146,15 +146,18 @@ export function PresetInput(props) {
           }}
           value={v()}
           class="min-w-0"
+          autocomplete={props.autocomplete ?? null}
           name={props.title ?? props.name ?? null}
         />
         <select
           onchange={(ev) => setV(ev.target.value)}
-          class="bg-gray-600 text-end"
+          class="bg-gray-600 text-end truncate"
           value={props.default ?? ""}
         >
           {props.default ? null : <option></option>}
-          {props.presets.map((v) => <option key={v}>{v}</option>)}
+          {props.presets.map((v) => (
+            <option key={v} class="truncate">{v}</option>
+          ))}
         </select>
       </div>
     </label>
@@ -204,6 +207,7 @@ export function Checkbox(props) {
         id={props.id}
         checked={props.checked ?? false}
         name={props.name ?? null}
+        oninput={props.oninput ?? null}
       />
       <div class="rounded bg-gray-700 peer-checked:bg-green-600 cursor-pointer select-none px-2 py-1">
         {props.children}

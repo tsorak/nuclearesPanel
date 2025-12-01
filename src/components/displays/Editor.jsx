@@ -2,6 +2,7 @@ import { createSignal, For, Match, Show, Switch } from "solid-js";
 import { Checkbox, Input, PresetInput } from "../AddTile.jsx";
 import { dpLocalStorage } from "../../DisplayPreset.jsx";
 import { unwrap } from "solid-js/store";
+import { useContextMenu } from "../ContextMenu.jsx";
 
 const DISPLAY_TYPES = ["radial", "7seg"];
 
@@ -60,7 +61,7 @@ export default function Editor(props) {
           />
         </Match>
       </Switch>
-      {/* <PresetSaver {...{ section, displays }} /> */}
+      <PresetSaver {...{ section, displays }} />
     </div>
   );
 }
@@ -227,6 +228,26 @@ function RadialForm(props) {
 function PresetSaver(props) {
   const { section, displays } = props;
 
+  const [includeUnsaved, setIncludeUnsaved] = createSignal(false);
+
+  const presets = () => {
+    if (includeUnsaved()) {
+      return dpLocalStorage.allKeys();
+    } else {
+      return dpLocalStorage.allNamedKeys();
+    }
+  };
+
+  const identifier = () => {
+    const display = displays.get[section];
+
+    if (display) {
+      return display.presetName ?? display.presetId;
+    }
+
+    return null;
+  };
+
   return (
     <div class="mb-2">
       <h4 class="flex warning-stripes">
@@ -235,12 +256,37 @@ function PresetSaver(props) {
       <p class="text-xs select-none">
         WARNING: overwrites preset with same name
       </p>
-      <PresetInput
-        type="text"
-        title="Preset Name"
-        // default={section}
-        presets={dpLocalStorage.allKeys()}
-      />
+      <div class="grid grid-cols-[1fr_min-content] gap-2 justify-center items-center">
+        <PresetInput
+          type="text"
+          title="Preset Name"
+          class="truncate"
+          autocomplete="off"
+          default={identifier()}
+          presets={presets()}
+        />
+        <Checkbox
+          checked={includeUnsaved()}
+          oninput={() => setIncludeUnsaved((p) => !p)}
+        >
+          <p class="text-center">Include unsaved</p>
+        </Checkbox>
+      </div>
+      <button
+        class="cursor-pointer bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded my-2 w-full"
+        type="button"
+        onclick={() => displays.unassignSection(section)}
+      >
+        <div class="flex justify-between items-center">
+          <span>⚠️ Unassign display for current tile</span>
+          <span
+            class="rounded-full text-center bg-blue-400 hover:bg-[#0000] transition-color duration-500 leading-[1.3] h-5 w-5"
+            title="Unassign the current display from this specific tile. No preset will be removed from storage."
+          >
+            ?
+          </span>
+        </div>
+      </button>
     </div>
   );
 }
