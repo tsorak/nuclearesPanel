@@ -2,7 +2,6 @@ import { createSignal, For, Match, Show, Switch } from "solid-js";
 import { Checkbox, Input, PresetInput } from "../AddTile.jsx";
 import { dpLocalStorage } from "../../DisplayPreset.jsx";
 import { unwrap } from "solid-js/store";
-import { useContextMenu } from "../ContextMenu.jsx";
 
 const DISPLAY_TYPES = ["radial", "7seg"];
 
@@ -33,11 +32,20 @@ export default function Editor(props) {
 
   return (
     <div class="bg-gray-500 rounded p-2 text-white flex flex-col max-w-xs">
-      <h4 class="flex warning-stripes border-b-2 border-white">
-        <span class="bg-black px-1">Add Form</span>
+      <h4 class="flex warning-stripes border-b-2 border-white font-mono font-bold">
+        <span class="bg-black px-1">TILE CONTROLS</span>
       </h4>
-      <div class="flex gap-2">
-        <span class="whitespace-nowrap">Form variant:</span>
+      <Button
+        onclick={() => displays.unassignSection(section)}
+        tooltip="Unassign the current display from this specific tile. No preset will be removed from storage."
+      >
+        <span>⚠️ Unassign display for current tile</span>
+      </Button>
+      <h4 class="flex warning-stripes border-b-2 border-white font-mono font-bold">
+        <span class="bg-black px-1">DISPLAY EDITOR</span>
+      </h4>
+      <div class="flex gap-2 items-center">
+        <span class="whitespace-nowrap">Form variant</span>
         <select
           class="bg-gray-500"
           oninput={(ev) => setAddType(ev.target.value)}
@@ -228,6 +236,24 @@ function RadialForm(props) {
 function PresetSaver(props) {
   const { section, displays } = props;
 
+  const [mode, setMode] = createSignal(
+    displays.hasSection(section) ? "save" : "load",
+  );
+
+  const [identifier, setIdentifier] = createSignal(
+    (() => {
+      const display = displays.get[section];
+
+      if (display) {
+        return display.presetName
+          ? ["presetName", display.presetName]
+          : ["presetName", display.presetId];
+      }
+
+      return null;
+    })() ?? [],
+    { equals: false },
+  );
   const [includeUnsaved, setIncludeUnsaved] = createSignal(false);
 
   const presets = () => {
@@ -238,21 +264,86 @@ function PresetSaver(props) {
     }
   };
 
-  const identifier = () => {
-    const display = displays.get[section];
+  const idV = () => identifier()[1] ?? null;
+  const setIdV = (v) =>
+    setIdentifier((p) => {
+      const u = p;
+      u[1] = v;
+      return u;
+    });
 
-    if (display) {
-      return display.presetName ?? display.presetId;
+  const tileDisplayState = () => {
+    const currentDisplay = displays.get[section];
+
+    if (!currentDisplay) {
+      return "empty";
     }
 
-    return null;
+    if (currentDisplay.presetName) {
+      return "saved";
+    }
+
+    if (currentDisplay.presetId) {
+      return "unsaved";
+    }
   };
 
   return (
     <div class="mb-2">
-      <h4 class="flex warning-stripes">
-        <span class="bg-black">Save as preset</span>
+      <h4 class="flex warning-stripes border-b-2 border-white font-mono font-bold">
+        <span class="bg-black">PRESET CONTROLS</span>
       </h4>
+      <div class="flex items-center gap-2">
+        <Switch>
+          <Match when={mode() === "save"}>
+            <Switch>
+              <Match when={tileDisplayState() === "empty"}>
+                <dot.Red />
+                <span>No display currently assigned</span>
+              </Match>
+              <Match when={tileDisplayState() === "unsaved"}>
+                <dot.Yellow />
+                <span>Unsaved changes</span>
+              </Match>
+              <Match when={tileDisplayState() === "saved"}>
+                <dot.Green />
+                <span>Saved</span>
+              </Match>
+            </Switch>
+          </Match>
+          <Match when={mode() === "load"}>
+            <Switch>
+              <Match when={tileDisplayState() === "empty"}>
+                <dot.Green />
+                <span>No display currently assigned</span>
+              </Match>
+              <Match when={tileDisplayState() === "unsaved"}>
+                <dot.Red />
+                <span>Unsaved</span>
+              </Match>
+              <Match when={tileDisplayState() === "saved"}>
+                <dot.Yellow />
+                <span>Saved</span>
+              </Match>
+            </Switch>
+          </Match>
+        </Switch>
+      </div>
+      <div class="flex flex-col">
+        <Button
+          title="Switch Mode"
+          onclick={() => setMode((p) => p === "save" ? "load" : "save")}
+        >
+          Operational Mode ⇆
+        </Button>
+        <div class="flex items-center">
+          <div class="border-b-2 border-dashed border-white flex-grow" />
+          <h2 class="uppercase font-mono font-bold px-2 py-1">
+            {mode()}
+          </h2>
+          <div class="border-b-2 border-dashed border-white flex-grow" />
+        </div>
+      </div>
       <p class="text-xs select-none">
         WARNING: overwrites preset with same name
       </p>
@@ -262,8 +353,8 @@ function PresetSaver(props) {
           title="Preset Name"
           class="truncate"
           autocomplete="off"
-          default={identifier()}
           presets={presets()}
+          signal={[idV, setIdV]}
         />
         <Checkbox
           checked={includeUnsaved()}
@@ -272,21 +363,86 @@ function PresetSaver(props) {
           <p class="text-center">Include unsaved</p>
         </Checkbox>
       </div>
-      <button
-        class="cursor-pointer bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded my-2 w-full"
-        type="button"
-        onclick={() => displays.unassignSection(section)}
-      >
-        <div class="flex justify-between items-center">
-          <span>⚠️ Unassign display for current tile</span>
-          <span
-            class="rounded-full text-center bg-blue-400 hover:bg-[#0000] transition-color duration-500 leading-[1.3] h-5 w-5"
-            title="Unassign the current display from this specific tile. No preset will be removed from storage."
-          >
-            ?
-          </span>
-        </div>
-      </button>
+      {/* <Button */}
+      {/*   onclick={() => { */}
+      {/*     // */}
+      {/*   }} */}
+      {/*   tooltip="" */}
+      {/* > */}
+      {/*   <span>⚠️ Unassign display for current tile</span> */}
+      {/* </Button> */}
     </div>
   );
 }
+
+function Button(props) {
+  const {
+    tooltip,
+  } = {
+    tooltip: props.tooltip ?? null,
+  };
+
+  return (
+    <button
+      class="cursor-pointer bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded my-2 w-full"
+      type="button"
+      {...props}
+    >
+      {tooltip
+        ? (
+          <div class="flex justify-between items-center">
+            {props.children}
+            <span
+              class="rounded-full text-center bg-blue-500 hover:bg-blue-400 hover:scale-110 transition-all duration-500 leading-[1.3] h-5 w-5"
+              title={tooltip}
+            >
+              ?
+            </span>
+          </div>
+        )
+        : (
+          <>
+            {props.children}
+          </>
+        )}
+    </button>
+  );
+}
+
+const dot = {
+  Green: (props) => {
+    const size = isNaN(props.size)
+      ? Number(props.size ?? 8) + "px"
+      : props.size;
+    return (
+      <span
+        class="rounded-full bg-green-500"
+        style={{ "width": size, "height": size }}
+      />
+    );
+  },
+  Yellow: (props) => {
+    const size = isNaN(props.size)
+      ? Number(props.size ?? 8) + "px"
+      : props.size;
+    return (
+      <span
+        class="rounded-full bg-yellow-500"
+        style={{ "width": size, "height": size }}
+      />
+    );
+  },
+  Red: (props) => {
+    console.log(props.size);
+    const size = isNaN(props.size)
+      ? Number(props.size ?? 8) + "px"
+      : props.size;
+    console.log(size);
+    return (
+      <span
+        class="rounded-full bg-red-500"
+        style={{ "width": size, "height": size }}
+      />
+    );
+  },
+};

@@ -128,7 +128,12 @@ export function Input(props) {
 }
 
 export function PresetInput(props) {
-  const [v, setV] = createSignal(props.default ?? "");
+  let [v, setV] = [];
+  if (props.signal) {
+    [v, setV] = props.signal;
+  } else {
+    [v, setV] = createSignal(props.default ?? "");
+  }
 
   if (!props.presets) {
     throw new Error("Missing prop 'presets'");
@@ -152,7 +157,7 @@ export function PresetInput(props) {
         <select
           onchange={(ev) => setV(ev.target.value)}
           class="bg-gray-600 text-end truncate"
-          value={props.default ?? ""}
+          value={v()}
         >
           {props.default ? null : <option></option>}
           {props.presets.map((v) => (
