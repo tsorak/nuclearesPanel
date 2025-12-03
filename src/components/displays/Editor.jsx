@@ -272,6 +272,54 @@ function PresetSaver(props) {
       return u;
     });
 
+  // warnings
+  // scenario 1
+  // Editor is opened for the first time without any current display.
+  //
+  // this means:
+  // 1. loading enabled
+  // 2. saving disabled
+  //
+  //
+  // scenario 2
+  // The current display does not have a related preset
+  //
+  // this means:
+  // 1. loading disabled (or warning saying the current display will be lost)
+  // 2. saving enabled
+  //
+  //
+  // scenario 3
+  // The current display has a related preset and is up to date with it
+  //
+  // this means:
+  // 1. loading enabled
+  // 2. saving enabled
+  //
+  //
+  // scenario 4
+  // The current display has a related preset and has changes made
+  //
+  // this means:
+  // 1. loading warning
+  // 2. saving enabled
+
+  // random thoughts:
+  //
+  // - PresetsContext
+  // displays(subjective) related to a preset without any local changes can use a signal containing the preset data
+  //
+  // - Saving the state between sessions for each scenario
+  // 1: x
+  //
+  // 2: load from unnamed
+  //
+  // 3 and 4: load based on the most recent (updatedAt.self <> updatedAt.preset)
+
+  // TODO:
+  // Separate "presetId", "presetName" and "updatedAt" from display specific entries.
+  // the display specific entries should be in "unnamed/preset" entry so we can save correctly to localstorage when a user quits their browser
+
   const tileDisplayState = () => {
     const currentDisplay = displays.get[section];
 
