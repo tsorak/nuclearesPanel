@@ -1,6 +1,6 @@
-import { createSignal, For, Match, Show, Switch } from "solid-js";
+import { createSignal, For, Match, onCleanup, Show, Switch } from "solid-js";
 import { Checkbox, Input, PresetInput } from "../AddTile.jsx";
-import { dpLocalStorage } from "../../DisplayPreset.jsx";
+import { dpLocalStorage } from "../../helper/displayPreset.js";
 import { unwrap } from "solid-js/store";
 
 const DISPLAY_TYPES = ["radial", "7seg"];
@@ -21,11 +21,23 @@ export default function Editor(props) {
     const identifiers = { presetId: presetId() };
     if (presetName()) identifiers.presetName = presetName();
 
+    const updatedAt = (p = {}) => (
+      {
+        self: new Date(),
+        preset: p?.preset ?? null,
+      }
+    );
+
     displays.updateSection(section, (p) => {
       if (p) {
-        return { ...p, ...data, ...identifiers };
+        return {
+          ...p,
+          ...data,
+          ...identifiers,
+          updatedAt: updatedAt(p.updatedAt ?? {}),
+        };
       } else {
-        return { ...data, ...identifiers };
+        return { ...data, ...identifiers, updatedAt: updatedAt() };
       }
     });
   };
@@ -133,11 +145,18 @@ function RadialForm(props) {
     props.applyToCurrentSection(data);
   };
 
+  // onCleanup(() => {
+  //   form.requestSubmit();
+  // });
+
   return (
     <form
       onsubmit={onsubmit}
       class="flex flex-col gap-2"
       ref={form}
+      onchange={() => {
+        form.requestSubmit();
+      }}
     >
       <Input type="number" title="Minimum Value" name="min" value={min} />
       <Input type="number" title="Maximum Value" name="max" value={max} />
@@ -240,20 +259,11 @@ function PresetSaver(props) {
     displays.hasSection(section) ? "save" : "load",
   );
 
-  const [identifier, setIdentifier] = createSignal(
-    (() => {
-      const display = displays.get[section];
+  const presetName = () => {
+    let v = displays[section];
+    return v ? v.presetName ?? "" : "";
+  };
 
-      if (display) {
-        return display.presetName
-          ? ["presetName", display.presetName]
-          : ["presetName", display.presetId];
-      }
-
-      return null;
-    })() ?? [],
-    { equals: false },
-  );
   const [includeUnsaved, setIncludeUnsaved] = createSignal(false);
 
   const presets = () => {
@@ -263,14 +273,6 @@ function PresetSaver(props) {
       return dpLocalStorage.allNamedKeys();
     }
   };
-
-  const idV = () => identifier()[1] ?? null;
-  const setIdV = (v) =>
-    setIdentifier((p) => {
-      const u = p;
-      u[1] = v;
-      return u;
-    });
 
   // warnings
   // scenario 1
@@ -320,21 +322,68 @@ function PresetSaver(props) {
   // Separate "presetId", "presetName" and "updatedAt" from display specific entries.
   // the display specific entries should be in "unnamed/preset" entry so we can save correctly to localstorage when a user quits their browser
 
-  const tileDisplayState = () => {
-    const currentDisplay = displays.get[section];
+  // const tileDisplayState = () => {
+  //   const currentDisplay = displays.get[section];
+  //
+  //   const updatedAt = currentDisplay.updatedAt;
+  //
+  //   if (!currentDisplay) {
+  //     return "empty";
+  //   }
+  //
+  //   if (currentDisplay.presetName) {
+  //     return "saved";
+  //   }
+  //
+  //   if (updatedAt.self) {
+  //     return "unsaved";
+  //   }
+  // };
 
-    if (!currentDisplay) {
-      return "empty";
+  const savePreset = (ev) => {
+    ev.preventDefault();
+
+    const d = Object.fromEntries(new FormData(ev.target).entries());
+
+    const name = d["Preset Name"] ?? "";
+    if (!name) return;
+    if (dpLocalStorage.get(name)) {
+      const overwrite = confirm(
+        "A preset already exists with the provided name.\n\nDo you want to overwrite?",
+      );
+      if (!overwrite) return;
     }
 
-    if (currentDisplay.presetName) {
-      return "saved";
-    }
-
-    if (currentDisplay.presetId) {
-      return "unsaved";
-    }
+    console.log("WRITING PRESET TO STORAGE");
+    dpLocalStorage.set(name, displays.get[section]);
   };
+
+  const loadPreset = (ev) => {
+    ev.preventDefault();
+
+    const d = Object.fromEntries(new FormData(ev.target).entries());
+    const name = d["Preset Name"] ?? "";
+    if (!name) return;
+
+    const preset = dpLocalStorage.get(name);
+    if (!preset) {
+      console.error(`Loading preset failed: Rreset "${name}" does not exist`);
+      return;
+    }
+
+    if ((displays.get[section] ?? {}).presetId) {
+      const yes = confirm(
+        "The current display WILL BE LOST.\n\n Do you want to continue?",
+      );
+      if (!yes) return;
+    }
+
+    console.log("LOADING PRESET FROM STORAGE");
+
+    displays.set(section, preset);
+  };
+
+  let saveForm, loadForm;
 
   return (
     <div class="mb-2">
@@ -342,40 +391,41 @@ function PresetSaver(props) {
         <span class="bg-black">PRESET CONTROLS</span>
       </h4>
       <div class="flex items-center gap-2">
-        <Switch>
-          <Match when={mode() === "save"}>
-            <Switch>
-              <Match when={tileDisplayState() === "empty"}>
-                <dot.Red />
-                <span>No display currently assigned</span>
-              </Match>
-              <Match when={tileDisplayState() === "unsaved"}>
-                <dot.Yellow />
-                <span>Unsaved changes</span>
-              </Match>
-              <Match when={tileDisplayState() === "saved"}>
-                <dot.Green />
-                <span>Saved</span>
-              </Match>
-            </Switch>
-          </Match>
-          <Match when={mode() === "load"}>
-            <Switch>
-              <Match when={tileDisplayState() === "empty"}>
-                <dot.Green />
-                <span>No display currently assigned</span>
-              </Match>
-              <Match when={tileDisplayState() === "unsaved"}>
-                <dot.Red />
-                <span>Unsaved</span>
-              </Match>
-              <Match when={tileDisplayState() === "saved"}>
-                <dot.Yellow />
-                <span>Saved</span>
-              </Match>
-            </Switch>
-          </Match>
-        </Switch>
+        {/* <Switch> */}
+        {/*   <Match when={mode() === "save"}> */}
+        {/*     <Switch> */}
+        {/*       <Match when={tileDisplayState() === "empty"}> */}
+        {/*         <dot.Red /> */}
+        {/*         <span>No display currently assigned</span> */}
+        {/*       </Match> */}
+        {/*       <Match when={tileDisplayState() === "unsaved"}> */}
+        {/*         <dot.Yellow /> */}
+        {/*         <span>Unsaved changes</span> */}
+        {/*       </Match> */}
+        {/*       <Match when={tileDisplayState() === "saved"}> */}
+        {/*         <dot.Green /> */}
+        {/*         <span>Saved</span> */}
+        {/*       </Match> */}
+        {/*     </Switch> */}
+        {/*   </Match> */}
+        {/*   <Match when={mode() === "load"}> */}
+        {/*     <Switch> */}
+        {/*       <Match when={tileDisplayState() === "empty"}> */}
+        {/*         <dot.Green /> */}
+        {/*         <span>No display currently assigned</span> */}
+        {/*       </Match> */}
+        {/*       <Match when={tileDisplayState() === "unsaved"}> */}
+        {/*         <dot.Red /> */}
+        {/*         <span>Unsaved</span> */}
+        {/*         {/* TODO: verify whether current preset has changes made */}
+        {/*       </Match> */}
+        {/*       <Match when={tileDisplayState() === "saved"}> */}
+        {/*         <dot.Yellow /> */}
+        {/*         <span>Saved</span> */}
+        {/*       </Match> */}
+        {/*     </Switch> */}
+        {/*   </Match> */}
+        {/* </Switch> */}
       </div>
       <div class="flex flex-col">
         <Button
@@ -393,32 +443,59 @@ function PresetSaver(props) {
         </div>
       </div>
       <p class="text-xs select-none">
-        WARNING: overwrites preset with same name
+        CAVEATS:
+        <span>When loading a preset you should treat it as read only.</span>
+        <br />
+        <span>
+          If you want to make changes to a preset from another tile you should
+          load it and save a new unique preset before making changes.
+        </span>
       </p>
-      <div class="grid grid-cols-[1fr_min-content] gap-2 justify-center items-center">
-        <PresetInput
-          type="text"
-          title="Preset Name"
-          class="truncate"
-          autocomplete="off"
-          presets={presets()}
-          signal={[idV, setIdV]}
-        />
-        <Checkbox
-          checked={includeUnsaved()}
-          oninput={() => setIncludeUnsaved((p) => !p)}
-        >
-          <p class="text-center">Include unsaved</p>
-        </Checkbox>
-      </div>
-      {/* <Button */}
-      {/*   onclick={() => { */}
-      {/*     // */}
-      {/*   }} */}
-      {/*   tooltip="" */}
-      {/* > */}
-      {/*   <span>⚠️ Unassign display for current tile</span> */}
-      {/* </Button> */}
+      <Switch>
+        <Match when={mode() === "load"}>
+          <form
+            class="grid grid-cols-[1fr_min-content] gap-2"
+            onsubmit={loadPreset}
+            ref={loadForm}
+          >
+            <PresetInput
+              type="text"
+              title="Preset Name"
+              class="truncate"
+              autocomplete="off"
+              presets={presets()}
+            />
+            <Checkbox
+              checked={includeUnsaved()}
+              oninput={() => setIncludeUnsaved((p) => !p)}
+            >
+              <p class="text-center">Include unsaved</p>
+            </Checkbox>
+          </form>
+          <Button title="Load" onclick={() => loadForm.requestSubmit()} />
+        </Match>
+
+        <Match when={mode() === "save"}>
+          <form
+            class="flex gap-2 justify-center items-center"
+            onsubmit={savePreset}
+            ref={saveForm}
+          >
+            <PresetInput
+              type="text"
+              title="Preset Name"
+              class="truncate"
+              autocomplete="off"
+              presets={presets()}
+              default={presetName()}
+            />
+          </form>
+          <p class="text-xs select-none">
+            WARNING: overwrites preset with same name
+          </p>
+          <Button title="Save" onclick={() => saveForm.requestSubmit()} />
+        </Match>
+      </Switch>
     </div>
   );
 }
@@ -450,7 +527,7 @@ function Button(props) {
         )
         : (
           <>
-            {props.children}
+            {props.children ?? props.title}
           </>
         )}
     </button>
@@ -481,11 +558,9 @@ const dot = {
     );
   },
   Red: (props) => {
-    console.log(props.size);
     const size = isNaN(props.size)
       ? Number(props.size ?? 8) + "px"
       : props.size;
-    console.log(size);
     return (
       <span
         class="rounded-full bg-red-500"

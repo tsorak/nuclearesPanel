@@ -2,7 +2,7 @@ import { batch } from "solid-js";
 import { createObjSignal } from "../components/ContextMenu.jsx";
 import { createStore } from "solid-js/store";
 
-import { loadDisplays } from "../DisplayPreset.jsx";
+import { loadDisplays } from "./displayPreset.js";
 
 export function validTile({ varName, title, unit, parse, rate, sections }) {
   if (!varName) throw new Error("Tile must contain a Variable to poll");
@@ -69,7 +69,6 @@ export function tileToStoreStructure(arg, opts) {
       // If a display preset is initially created without a name,
       // it is saved in localstorage based on the uuid.
       // Both named and unnamed should be shown separately.
-      // Unnamed ones can be named. When they get a name remove the unnamed uuid from localstorage
       const [getCD, setCD] = createStore(loadDisplays(obj.displays) ?? {});
 
       const rateSignal = createObjSignal(rate);
@@ -86,7 +85,6 @@ export function tileToStoreStructure(arg, opts) {
           getSection: (sec) => {
             const displayPreset = getCD[sec];
             return displayPreset ? displayPreset : null;
-            //TODO: storage should not be reactive? users of the same display in different sections should not edit the preset for the both of them.
           },
           updateSection: (sec, presetData) => {
             setCD(sec, presetData);

@@ -1,6 +1,6 @@
 import { batch } from "solid-js";
 import { SECTIONS } from "../constants.js";
-import { dpLocalStorage } from "../DisplayPreset.jsx";
+import { dpLocalStorage } from "./displayPreset.js";
 
 export function createStoreHelper(store, setStore) {
   const addToSection = (section, pointer) => {

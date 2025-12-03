@@ -42,12 +42,11 @@ export const dpLocalStorage = {
   migrateToNamed: (id, name, obj, opts) => {
     const overwrite = opts.overwrite ?? false;
 
-    if (dpLocalStorage.get(name) && !overwrite) {
+    if (!overwrite && dpLocalStorage.get(`DISPLAY_PRESET_${name}`)) {
       throw new Error("Preset with name already exists");
     }
 
     dpLocalStorage.set(name, obj);
-    throw "WIP";
     localStorage.removeItem(`UNNAMED_DISPLAY_PRESET_${id}`);
 
     return true;
@@ -57,9 +56,9 @@ export const dpLocalStorage = {
 function toPresetEntry(str) {
   const v = str.split("PRESET_").splice(1).join("_");
   if (str.startsWith("DISPLAY_PRESET_")) {
-    return ["presetName", v];
+    return v;
   } else if (str.startsWith("UNNAMED_DISPLAY_PRESET_")) {
-    return ["presetId", v];
+    return v;
   }
   return null;
 }

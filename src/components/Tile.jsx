@@ -5,7 +5,6 @@ import { batch } from "solid-js";
 
 import * as rg from "./displays/RadialGauge.jsx";
 import DisplayEditor from "./displays/Editor.jsx";
-import { dpLocalStorage } from "../DisplayPreset.jsx";
 
 export default function Tile(
   { tilePointer, pollerStore, storeHelper, currentSection },
