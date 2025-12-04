@@ -34,10 +34,10 @@ export default function Editor(props) {
           ...p,
           ...data,
           ...identifiers,
-          updatedAt: updatedAt(p.updatedAt ?? {}),
+          updatedAt: new Date(),
         };
       } else {
-        return { ...data, ...identifiers, updatedAt: updatedAt() };
+        return { ...data, ...identifiers, updatedAt: new Date() };
       }
     });
   };
@@ -353,6 +353,8 @@ function PresetSaver(props) {
       );
       if (!overwrite) return;
     }
+
+    displays.updateSection(section, (p) => ({ ...p, presetName: name }));
 
     console.log("WRITING PRESET TO STORAGE");
     dpLocalStorage.set(name, displays.get[section]);

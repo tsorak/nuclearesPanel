@@ -16,13 +16,22 @@ export const dpLocalStorage = {
     const v = localStorage.getItem(`DISPLAY_PRESET_${name}`);
 
     if (v) {
-      return JSON.parse(v);
+      return JSON.parse(v, (k, v) => {
+        if (k === "updatedAt") {
+          return new Date(v);
+        }
+
+        return v;
+      });
     } else {
       return null;
     }
   },
   set: (name, obj) => {
-    localStorage.setItem(`DISPLAY_PRESET_${name}`, JSON.stringify(obj));
+    localStorage.setItem(
+      `DISPLAY_PRESET_${name}`,
+      JSON.stringify({ ...obj, presetId: undefined }),
+    );
   },
 
   getUnnamed: (id) => {
