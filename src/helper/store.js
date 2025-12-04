@@ -99,8 +99,8 @@ export function rescueDisplay(obj) {
 
 export function saveDisplay(obj) {
   if (obj.presetName) {
-    dpLocalStorage.set(obj.presetName, obj);
-  } else {
-    dpLocalStorage.setUnnamed(obj.presetId, obj);
+    if (!obj.modifiedDate || obj.modifiedDate < obj.saveDate) return;
   }
+
+  dpLocalStorage.setUnnamed(obj.presetId, obj);
 }

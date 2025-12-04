@@ -2,6 +2,7 @@ import { createSignal, For, Match, onCleanup, Show, Switch } from "solid-js";
 import { Checkbox, Input, PresetInput } from "../AddTile.jsx";
 import { dpLocalStorage } from "../../helper/displayPreset.js";
 import { unwrap } from "solid-js/store";
+import { createEffect } from "solid-js";
 
 const DISPLAY_TYPES = ["radial", "7seg"];
 
@@ -21,26 +22,23 @@ export default function Editor(props) {
     const identifiers = { presetId: presetId() };
     if (presetName()) identifiers.presetName = presetName();
 
-    const updatedAt = (p = {}) => (
-      {
-        self: new Date(),
-        preset: p?.preset ?? null,
-      }
-    );
-
     displays.updateSection(section, (p) => {
       if (p) {
         return {
           ...p,
           ...data,
           ...identifiers,
-          updatedAt: new Date(),
+          modifiedDate: new Date(),
         };
       } else {
-        return { ...data, ...identifiers, updatedAt: new Date() };
+        return { ...data, ...identifiers, modifiedDate: new Date() };
       }
     });
   };
+
+  createEffect(() => {
+    console.log(displays.get[section]);
+  });
 
   return (
     <div class="bg-gray-500 rounded p-2 text-white flex flex-col max-w-xs">
@@ -354,7 +352,15 @@ function PresetSaver(props) {
       if (!overwrite) return;
     }
 
-    displays.updateSection(section, (p) => ({ ...p, presetName: name }));
+    displays.updateSection(
+      section,
+      (p) => ({
+        ...p,
+        presetName: name,
+        modifiedDate: null,
+        saveDate: new Date(),
+      }),
+    );
 
     console.log("WRITING PRESET TO STORAGE");
     dpLocalStorage.set(name, displays.get[section]);
@@ -382,7 +388,10 @@ function PresetSaver(props) {
 
     console.log("LOADING PRESET FROM STORAGE");
 
-    displays.set(section, preset);
+    displays.set(
+      section,
+      (p) => ({ ...preset, presetId: p?.presetId ?? crypto.randomUUID() }),
+    );
   };
 
   let saveForm, loadForm;

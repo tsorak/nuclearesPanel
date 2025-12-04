@@ -117,11 +117,11 @@ const persistStore = {
             const { presetName, presetId } = obj;
             if (!presetId) {
               rescueDisplay(obj);
-              return null;
+              return [null, null];
             }
-            saveDisplay({ ...obj, presetName: null });
+            saveDisplay(obj);
             if (presetName) {
-              return [sec, { presetName, updatedAt: obj.updatedAt }];
+              return [sec, { presetName, presetId }];
             } else if (presetId) {
               return [sec, { presetId }];
             } else {
@@ -144,38 +144,7 @@ const persistStore = {
       return tiles;
     })();
 
-    // Save the most recently modified preset by each presetName
-    const displaysByPresetName = tiles.flatMap((t) => {
-      return Object.entries(t.displays)
-        .filter(([_sec, display]) => !!display.presetName)
-        .map(([sec, display]) => {
-          const storePath = { tiles: t.varName, displays: sec };
-
-          return { storePath, display };
-        });
-    }).reduce((acc, preset) => {
-      const lastPresetsCategory = acc[preset.display.presetName] ?? [];
-
-      lastPresetsCategory.push(preset);
-
-      acc[preset.display.presetName] = lastPresetsCategory;
-
-      return acc;
-    }, {});
-
-    Object.values(displaysByPresetName).map((tiles) => {
-      const mostRecent = tiles.sort((a, b) =>
-        a.display.updatedAt > b.display.updatedAt ? -1 : 1
-      ).at(0);
-
-      const obj =
-        storeData["tiles"][mostRecent.storePath.tiles].pointer().displays
-          .get[mostRecent.storePath.displays];
-
-      saveDisplay(obj);
-    });
-
-    // console.log(tiles);
+    console.log(tiles);
     // console.log(displaysByPresetName);
 
     const str = JSON.stringify(tiles);

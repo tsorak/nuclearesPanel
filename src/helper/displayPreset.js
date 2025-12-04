@@ -17,10 +17,9 @@ export const dpLocalStorage = {
 
     if (v) {
       return JSON.parse(v, (k, v) => {
-        if (k === "updatedAt") {
+        if (k === "saveDate") {
           return new Date(v);
         }
-
         return v;
       });
     } else {
@@ -30,7 +29,11 @@ export const dpLocalStorage = {
   set: (name, obj) => {
     localStorage.setItem(
       `DISPLAY_PRESET_${name}`,
-      JSON.stringify({ ...obj, presetId: undefined }),
+      JSON.stringify({
+        ...obj,
+        presetId: undefined,
+        modifiedDate: undefined,
+      }),
     );
   },
 
@@ -39,26 +42,24 @@ export const dpLocalStorage = {
     const v = localStorage.getItem(`UNNAMED_DISPLAY_PRESET_${id}`);
 
     if (v) {
-      return JSON.parse(v);
+      return JSON.parse(v, (k, v) => {
+        if (k === "modifiedDate") {
+          return new Date(v);
+        }
+        return v;
+      });
     } else {
       return null;
     }
   },
   setUnnamed: (id, obj) => {
-    localStorage.setItem(`UNNAMED_DISPLAY_PRESET_${id}`, JSON.stringify(obj));
-  },
-
-  migrateToNamed: (id, name, obj, opts) => {
-    const overwrite = opts.overwrite ?? false;
-
-    if (!overwrite && dpLocalStorage.get(`DISPLAY_PRESET_${name}`)) {
-      throw new Error("Preset with name already exists");
-    }
-
-    dpLocalStorage.set(name, obj);
-    localStorage.removeItem(`UNNAMED_DISPLAY_PRESET_${id}`);
-
-    return true;
+    localStorage.setItem(
+      `UNNAMED_DISPLAY_PRESET_${id}`,
+      JSON.stringify({
+        ...obj,
+        saveDate: undefined,
+      }),
+    );
   },
 };
 
@@ -80,7 +81,18 @@ export function loadDisplays(displays) {
       [sec, obj],
     ) => {
       if (obj.presetName) {
-        return [sec, dpLocalStorage.get(obj.presetName)];
+        const unnamed = dpLocalStorage.getUnnamed(obj.presetId);
+        const preset = dpLocalStorage.get(obj.presetName);
+
+        if (!unnamed || !unnamed.modifiedDate) {
+          return [sec, { ...preset, presetId: obj.presetId }];
+        }
+
+        if (unnamed.modifiedDate > preset.saveDate) {
+          return [sec, unnamed];
+        } else {
+          return [sec, { ...preset, presetId: obj.presetId }];
+        }
       } else {
         return [sec, dpLocalStorage.getUnnamed(obj.presetId)];
       }
