@@ -23,7 +23,7 @@ export default function SegmentDisplay(props) {
   return (
     <div class="flex gap-1 bg-black p-1">
       <For each={segments}>
-        {({ get }, i) => <Display v={get} size={size} />}
+        {({ get }) => <Display v={get} size={size} />}
       </For>
     </div>
   );
@@ -46,7 +46,7 @@ const counter = () => {
 };
 
 const getNumberPerSegments = (v, segCount) => {
-  let vStr = `${v}`;
+  const vStr = `${v}`;
   if (vStr.length < segCount) {
     // how many 0s to the left we are missing
     // example: we have 3 segments but get a value of 14.
@@ -62,7 +62,7 @@ const getNumberPerSegments = (v, segCount) => {
     if (n === 0) {
       return vStr.split("").map(Number);
     } else {
-      return vStr.substring(n).split("").map(Number);
+      return new Array(segCount).fill(9);
     }
   }
 };
