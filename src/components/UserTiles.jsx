@@ -12,6 +12,8 @@ import {
 } from "../helper/store.js";
 import PollerActiveControls from "./PollerActiveControls.jsx";
 
+import SegmentDisplay from "../components/SegmentDisplay.jsx";
+
 export default function UserTiles(props) {
   const [store, setStore] = createStore(persistStore.loadOrDefault());
   const pollers = pollerHelper.makePollerStore(store.tiles);
@@ -28,6 +30,9 @@ export default function UserTiles(props) {
 
   return (
     <div class="flex flex-col gap-2">
+      <div class="flex">
+        <SegmentDisplay segments={3} />
+      </div>
       <Nav {...{ store, setStore, pollers }} />
       <div class="flex flex-wrap gap-2 mx-auto max-w-xs md:max-w-2xl lg:max-w-6xl">
         <Suspense>
