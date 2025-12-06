@@ -1,10 +1,5 @@
 import * as cg from "canvas-gauges";
 import { createEffect, onMount } from "solid-js";
-import { clientOnly } from "@solidjs/start";
-
-export default clientOnly(async () => ({ default: RadialGauge }), {
-  lazy: true,
-});
 
 export function createProps(
   min = null,
@@ -31,7 +26,7 @@ export function createProps(
   );
 }
 
-function RadialGauge(props) {
+export default function RadialGauge(props) {
   const store = props.store;
 
   const highlights = () => parseHighlights(store.highlights);

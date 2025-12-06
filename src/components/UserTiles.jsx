@@ -1,6 +1,5 @@
 import { For, Suspense } from "solid-js";
 import { createStore } from "solid-js/store";
-import { clientOnly } from "@solidjs/start";
 
 import Tile from "./Tile.jsx";
 import AddTile from "./AddTile.jsx";
@@ -13,9 +12,7 @@ import {
 } from "../helper/store.js";
 import PollerActiveControls from "./PollerActiveControls.jsx";
 
-export default clientOnly(async () => ({ default: UserTiles }), { lazy: true });
-
-function UserTiles(props) {
+export default function UserTiles(props) {
   const [store, setStore] = createStore(persistStore.loadOrDefault());
   const pollers = pollerHelper.makePollerStore(store.tiles);
 

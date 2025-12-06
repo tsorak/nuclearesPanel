@@ -1,21 +1,21 @@
 {
-  "name": "example-with-tailwindcss",
+  "name": "nucleares-panel",
   "type": "module",
   "scripts": {
-    "dev": "vinxi dev",
-    "build": "vinxi build",
-    "start": "vinxi start"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@solidjs/router": "^0.15.0",
-    "@solidjs/start": "^1.1.0",
     "canvas-gauges": "^2.1.7-radial",
-    "solid-js": "^1.9.5",
-    "vinxi": "^0.5.7"
+    "solid-js": "^1.9.5"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.7",
-    "tailwindcss": "^4.0.7"
+    "tailwindcss": "^4.0.7",
+    "vite": "^7.2.4",
+    "vite-plugin-solid": "^2.11.10"
   },
   "engines": {
     "node": ">=22"
