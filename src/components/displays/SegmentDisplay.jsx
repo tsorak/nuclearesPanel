@@ -1,5 +1,5 @@
 import { createEffect, createSignal, For, onCleanup, onMount } from "solid-js";
-import { createObjSignal } from "./ContextMenu.jsx";
+import { createObjSignal } from "../ContextMenu.jsx";
 
 import Display from "./segment/Display.jsx";
 

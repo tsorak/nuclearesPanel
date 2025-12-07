@@ -12,7 +12,7 @@ import {
 } from "../helper/store.js";
 import PollerActiveControls from "./PollerActiveControls.jsx";
 
-import SegmentDisplay from "../components/SegmentDisplay.jsx";
+import SegmentDisplay from "../components/displays/SegmentDisplay.jsx";
 
 export default function UserTiles(props) {
   const [store, setStore] = createStore(persistStore.loadOrDefault());
