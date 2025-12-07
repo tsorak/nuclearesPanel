@@ -10,10 +10,10 @@ export default function Editor(props) {
   const { section, displays } = props;
 
   const [presetId, setPresetId] = createSignal(
-    displays.get[section]?.presetId ?? crypto.randomUUID(),
+    displays.section[section]?.presetId ?? crypto.randomUUID(),
   );
   const [presetName, setPresetName] = createSignal(
-    displays.get[section]?.presetName ?? null,
+    displays.section[section]?.presetName ?? null,
   );
 
   const [addType, setAddType] = createSignal("radial");
@@ -37,7 +37,7 @@ export default function Editor(props) {
   };
 
   createEffect(() => {
-    console.log(displays.get[section]);
+    console.log(displays.section[section]);
   });
 
   return (
@@ -74,7 +74,7 @@ export default function Editor(props) {
           <RadialForm
             {...{
               applyToCurrentSection,
-              default: displays.getSection(section),
+              default: displays.section[section],
             }}
           />
         </Match>
@@ -321,7 +321,7 @@ function PresetSaver(props) {
   // the display specific entries should be in "unnamed/preset" entry so we can save correctly to localstorage when a user quits their browser
 
   // const tileDisplayState = () => {
-  //   const currentDisplay = displays.get[section];
+  //   const currentDisplay = displays.section[section];
   //
   //   const updatedAt = currentDisplay.updatedAt;
   //
@@ -363,7 +363,7 @@ function PresetSaver(props) {
     );
 
     console.log("WRITING PRESET TO STORAGE");
-    dpLocalStorage.set(name, displays.get[section]);
+    dpLocalStorage.set(name, displays.section[section]);
   };
 
   const loadPreset = (ev) => {
@@ -379,7 +379,7 @@ function PresetSaver(props) {
       return;
     }
 
-    if ((displays.get[section] ?? {}).presetId) {
+    if ((displays.section[section] ?? {}).presetId) {
       const yes = confirm(
         "The current display WILL BE LOST.\n\n Do you want to continue?",
       );

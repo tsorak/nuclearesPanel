@@ -149,7 +149,7 @@ export default function Tile(
           class="flex justify-center"
         >
           <Show
-            when={displays.get[currentSection] ?? null}
+            when={displays.section[currentSection] ?? null}
             fallback={
               <div class="bg-black w-full flex justify-center self-stretch">
                 <p class="flex gap-1 text-yellow-400 font-mono">
@@ -160,7 +160,7 @@ export default function Tile(
           >
             <rg.default
               {...{
-                store: displays.get[currentSection],
+                store: displays.section[currentSection],
                 value: poller.value,
               }}
             />

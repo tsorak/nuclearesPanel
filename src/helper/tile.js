@@ -79,7 +79,7 @@ export function tileToStoreStructure(arg, opts) {
         unit,
         parse,
         displays: {
-          get: getCD,
+          section: getCD,
           set: setCD,
           hasSection: (sec) => !!getCD[sec],
           getSection: (sec) => {

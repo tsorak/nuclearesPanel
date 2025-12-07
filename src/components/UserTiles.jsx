@@ -127,7 +127,7 @@ const persistStore = {
             displays,
           } = pointer();
 
-          const displayPresetNames = Object.entries(displays.get).map((
+          const displayPresetNames = Object.entries(displays.section).map((
             [sec, obj],
           ) => {
             const { presetName, presetId } = obj;
