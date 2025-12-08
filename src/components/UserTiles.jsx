@@ -12,8 +12,7 @@ import {
 } from "../helper/store.js";
 import PollerActiveControls from "./PollerActiveControls.jsx";
 
-import SegmentDisplay from "../components/displays/SegmentDisplay.jsx";
-import Light, { counter } from "../components/displays/Light.jsx";
+import SegmentDisplay from "./displays/SegmentDisplay.jsx";
 
 export default function UserTiles(props) {
   const [store, setStore] = createStore(persistStore.loadOrDefault());
@@ -28,8 +27,6 @@ export default function UserTiles(props) {
   globalThis.addEventListener("beforeunload", () => {
     persistStore.save(store);
   });
-
-  const lightCounter = counter();
 
   return (
     <div class="flex flex-col gap-2">
@@ -67,15 +64,6 @@ export default function UserTiles(props) {
         </Suspense>
       </div>
       <div class="flex m-16">
-        <Light
-          value={lightCounter}
-          colorIntervals={[
-            [0, "#ff0"],
-            [150, "#0f0"],
-            [190, "#f00"],
-            [195, "#f00", { animation: ["pulse", 0.2] }],
-          ]}
-        />
       </div>
     </div>
   );

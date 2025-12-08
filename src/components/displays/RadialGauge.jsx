@@ -1,5 +1,7 @@
 import * as cg from "canvas-gauges";
-import { createEffect, onMount } from "solid-js";
+import { createEffect, onMount, Show } from "solid-js";
+
+import Light from "./Light.jsx";
 
 export function createProps(
   min = null,
@@ -97,7 +99,17 @@ export default function RadialGauge(props) {
     });
   });
 
-  return <canvas ref={el} />;
+  return (
+    <Show when={store.light} fallback={<canvas ref={el} />}>
+      <div class="relative">
+        <canvas ref={el} />
+        <LightWrapper
+          store={props.store}
+          value={props.value}
+        />
+      </div>
+    </Show>
+  );
 }
 
 function parseHighlights(highlights) {
@@ -116,4 +128,38 @@ function parseHighlights(highlights) {
     }));
   }
   return highlights;
+}
+
+function LightWrapper(props) {
+  const radial = props.store;
+  const value = props.value;
+
+  const colorIntervals = () => props.store.light.colorIntervals;
+  const size = () => props.store.light.size;
+
+  const offset = () => {
+    return radial.size / Math.PI + size() / 1.6;
+  };
+
+  return (
+    <div class="absolute left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]">
+      <div
+        class="relative"
+        style={{
+          "left": `${offset()}px`,
+          "top": `-${offset()}px`,
+        }}
+      >
+        <Light
+          colorIntervals={colorIntervals}
+          size={size}
+          value={value}
+        />
+      </div>
+    </div>
+  );
+}
+
+function colorIntervalsFromHighlights(arr) {
+  return arr.map(([from, _to, color]) => [from, color]);
 }

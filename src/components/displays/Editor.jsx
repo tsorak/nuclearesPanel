@@ -3,6 +3,7 @@ import { Checkbox, Input, PresetInput } from "../AddTile.jsx";
 import { dpLocalStorage } from "../../helper/displayPreset.js";
 import { unwrap } from "solid-js/store";
 import { createEffect } from "solid-js";
+import Light from "./editor/Light.jsx";
 
 const DISPLAY_TYPES = ["radial", "7seg"];
 
@@ -41,7 +42,7 @@ export default function Editor(props) {
   });
 
   return (
-    <div class="bg-gray-500 rounded p-2 text-white flex flex-col max-w-xs">
+    <div class="bg-gray-500 rounded p-2 text-white flex flex-col">
       <h4 class="flex warning-stripes border-b-2 border-white font-mono font-bold">
         <span class="bg-black px-1">TILE CONTROLS</span>
       </h4>
@@ -49,7 +50,9 @@ export default function Editor(props) {
         onclick={() => displays.unassignSection(section)}
         tooltip="Unassign the current display from this specific tile. No preset will be removed from storage."
       >
-        <span>⚠️ Unassign display for current tile</span>
+        <span class="whitespace-nowrap">
+          ⚠️ Unassign display for current tile
+        </span>
       </Button>
       <h4 class="flex warning-stripes border-b-2 border-white font-mono font-bold">
         <span class="bg-black px-1">DISPLAY EDITOR</span>
@@ -129,6 +132,13 @@ function RadialForm(props) {
 
     const d = Object.fromEntries(new FormData(ev.target).entries());
 
+    const lightCfg = light.signals.intervals.get().length > 0
+      ? {
+        colorIntervals: structuredClone(light.signals.intervals.get()),
+        size: Number(d.lightSize),
+      }
+      : undefined;
+
     const data = {
       displayType: "radial",
       min: Number(d.min),
@@ -138,7 +148,10 @@ function RadialForm(props) {
       unit: d.unit,
       valueBox: d.valueBox ? true : false,
       size: Number(d.size),
+      light: lightCfg,
     };
+
+    // console.log(data);
 
     props.applyToCurrentSection(data);
   };
@@ -146,6 +159,8 @@ function RadialForm(props) {
   // onCleanup(() => {
   //   form.requestSubmit();
   // });
+
+  const light = Light({ default: props.default });
 
   return (
     <form
@@ -240,6 +255,7 @@ function RadialForm(props) {
         Enable Digital Display
       </Checkbox>
       <Input type="number" title="Size" name="size" value={size} />
+      <light.Jsx />
       <button
         class="cursor-pointer bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded mb-2"
         type="submit"
@@ -520,16 +536,16 @@ function Button(props) {
 
   return (
     <button
-      class="cursor-pointer bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded my-2 w-full"
+      class="cursor-pointer bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded my-2"
       type="button"
       {...props}
     >
       {tooltip
         ? (
-          <div class="flex justify-between items-center">
+          <div class="flex justify-between items-center gap-2 box-border">
             {props.children}
             <span
-              class="rounded-full text-center bg-blue-500 hover:bg-blue-400 hover:scale-110 transition-all duration-500 leading-[1.3] h-5 w-5"
+              class="shrink-0 rounded-full text-center bg-blue-500 hover:bg-blue-400 hover:scale-110 transition-all duration-500 leading-[1.3] h-5 w-5"
               title={tooltip}
             >
               ?

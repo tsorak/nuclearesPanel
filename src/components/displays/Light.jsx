@@ -1,35 +1,40 @@
-import { createSignal, onCleanup, onMount } from "solid-js";
+import { createEffect } from "solid-js";
+import { createMemo, createSignal, onCleanup, onMount } from "solid-js";
 
 export default function Light(props) {
   const colorIntervals = props.colorIntervals ??
-    [[false, null], [true, "#f00"]];
-  const size = props.size ?? 16;
+    (() => [[false, null], [true, "#f00"]]);
+  const size = props.size ? createMemo(props.size) : (() => 16);
   const value = props.value ?? counter();
 
-  const map = Object.fromEntries(
-    colorIntervals.map((
-      [k, color, opts],
-    ) => [k, opts ? { color, ...opts } : { color }]),
+  const map = createMemo(() =>
+    Object.fromEntries(
+      colorIntervals().map((
+        [k, color, opts],
+      ) => [k, opts ? { color, ...opts } : { color }]),
+    )
   );
 
-  const intervals = colorIntervals.map(([k]) => k);
+  const intervals = createMemo(() => colorIntervals().map(([k]) => k));
 
-  const v = () => {
-    let v = findClosestFloor(intervals, value());
+  const v = createMemo(() => {
+    let v = value.latest ?? value();
+    if (v instanceof Error) return { color: "#fff", animation: "pulse" };
+    v = findClosestFloor(intervals(), v);
     if (v === null) return null;
 
-    if (typeof value() === "boolean") {
+    if (typeof (value.latest ?? value()) === "boolean") {
       v = !!v;
     }
 
-    return map[v];
-  };
+    return map()[v];
+  });
 
   const _LOAD_TAILWIND_CLASSES = ["animate-pulse"];
 
   const animation = (v) => {
     v = v();
-    if (!v.animation) return {};
+    if (!v?.animation) return {};
     if (typeof v?.animation == "string") {
       return {
         "animation": `${v.animation} 1s infinite`,
@@ -45,9 +50,9 @@ export default function Light(props) {
     <div
       class="rounded-full border-gray-400"
       style={{
-        "width": size + "px",
-        "height": size + "px",
-        "border-width": size / 8 + "px",
+        "width": size() + "px",
+        "height": size() + "px",
+        "border-width": size() / 8 + "px",
       }}
     >
       <div
@@ -63,9 +68,9 @@ export default function Light(props) {
             ...(v()?.color
               ? {
                 "box-shadow": `0px 0px ${
-                  size * (1 + (v().bloomIntensity ?? 0) * 2)
+                  size() * (1 + (v().bloomIntensity ?? 0) * 2)
                 }px ${
-                  size * (0.25 + (v().bloomIntensity ?? 0))
+                  size() * (0.25 + (v().bloomIntensity ?? 0))
                 }px ${v().color}`,
               }
               : {}),
