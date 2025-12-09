@@ -47,7 +47,16 @@ export default function Light(props) {
                 <Input
                   type="text"
                   value={range[0]}
-                  oninput={updateInterval(rangeId, 0, (s) => Number(s))}
+                  oninput={updateInterval(rangeId, 0, (s) => {
+                    switch (s) {
+                      case "true":
+                        return true;
+                      case "false":
+                        return false;
+                      default:
+                        return Number(s);
+                    }
+                  })}
                 />
                 <Input
                   type="text"

@@ -5,7 +5,7 @@ import { unwrap } from "solid-js/store";
 import { createEffect } from "solid-js";
 import Light from "./editor/Light.jsx";
 
-const DISPLAY_TYPES = ["radial", "7seg"];
+const DISPLAY_TYPES = ["radial", "light"];
 
 export default function Editor(props) {
   const { section, displays } = props;
@@ -17,7 +17,9 @@ export default function Editor(props) {
     displays.section[section]?.presetName ?? null,
   );
 
-  const [addType, setAddType] = createSignal("radial");
+  const [addType, setAddType] = createSignal(
+    displays.section[section]?.displayType ?? "light",
+  );
 
   const applyToCurrentSection = (data) => {
     const identifiers = { presetId: presetId() };
@@ -81,9 +83,64 @@ export default function Editor(props) {
             }}
           />
         </Match>
+        <Match when={addType() === "light"}>
+          <LightForm
+            {...{
+              applyToCurrentSection,
+              default: displays.section[section],
+            }}
+          />
+        </Match>
       </Switch>
       <PresetSaver {...{ section, displays }} />
     </div>
+  );
+}
+
+function LightForm(props) {
+  let form;
+
+  const light = Light({ default: { light: props.default } });
+
+  const onsubmit = (ev) => {
+    ev.preventDefault();
+
+    const d = Object.fromEntries(new FormData(ev.target).entries());
+
+    const data = light.signals.intervals.get().length > 0
+      ? {
+        displayType: "light",
+        colorIntervals: structuredClone(light.signals.intervals.get()),
+        size: Number(d.lightSize),
+      }
+      : {
+        displayType: "light",
+        colorIntervals: [0, "#f009", { animation: ["pulse", 1] }],
+        size: 16,
+      };
+
+    console.log(data);
+
+    props.applyToCurrentSection(data);
+  };
+
+  return (
+    <form
+      class="flex flex-col gap-2"
+      ref={form}
+      onsubmit={onsubmit}
+      onchange={() => {
+        form.requestSubmit();
+      }}
+    >
+      <light.Jsx />
+      <button
+        class="cursor-pointer bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded mb-2"
+        type="submit"
+      >
+        Apply
+      </button>
+    </form>
   );
 }
 
@@ -417,43 +474,6 @@ function PresetSaver(props) {
       <h4 class="flex warning-stripes border-b-2 border-white font-mono font-bold">
         <span class="bg-black">PRESET CONTROLS</span>
       </h4>
-      <div class="flex items-center gap-2">
-        {/* <Switch> */}
-        {/*   <Match when={mode() === "save"}> */}
-        {/*     <Switch> */}
-        {/*       <Match when={tileDisplayState() === "empty"}> */}
-        {/*         <dot.Red /> */}
-        {/*         <span>No display currently assigned</span> */}
-        {/*       </Match> */}
-        {/*       <Match when={tileDisplayState() === "unsaved"}> */}
-        {/*         <dot.Yellow /> */}
-        {/*         <span>Unsaved changes</span> */}
-        {/*       </Match> */}
-        {/*       <Match when={tileDisplayState() === "saved"}> */}
-        {/*         <dot.Green /> */}
-        {/*         <span>Saved</span> */}
-        {/*       </Match> */}
-        {/*     </Switch> */}
-        {/*   </Match> */}
-        {/*   <Match when={mode() === "load"}> */}
-        {/*     <Switch> */}
-        {/*       <Match when={tileDisplayState() === "empty"}> */}
-        {/*         <dot.Green /> */}
-        {/*         <span>No display currently assigned</span> */}
-        {/*       </Match> */}
-        {/*       <Match when={tileDisplayState() === "unsaved"}> */}
-        {/*         <dot.Red /> */}
-        {/*         <span>Unsaved</span> */}
-        {/*         {/* TODO: verify whether current preset has changes made */}
-        {/*       </Match> */}
-        {/*       <Match when={tileDisplayState() === "saved"}> */}
-        {/*         <dot.Yellow /> */}
-        {/*         <span>Saved</span> */}
-        {/*       </Match> */}
-        {/*     </Switch> */}
-        {/*   </Match> */}
-        {/* </Switch> */}
-      </div>
       <div class="flex flex-col">
         <Button
           title="Switch Mode"

@@ -5,6 +5,10 @@ import { batch } from "solid-js";
 
 import * as rg from "./displays/RadialGauge.jsx";
 import DisplayEditor from "./displays/Editor.jsx";
+import { Switch } from "solid-js";
+import Light from "./displays/Light.jsx";
+import { Match } from "solid-js";
+import { Dynamic } from "solid-js/web";
 
 export default function Tile(
   { tilePointer, pollerStore, storeHelper, currentSection },
@@ -102,6 +106,31 @@ export default function Tile(
 
   const cmenu = useContextMenu();
 
+  const display = {
+    radial: () => (
+      <rg.default
+        {...{
+          store: displays.section[currentSection],
+          value: poller.value,
+        }}
+      />
+    ),
+    light: () => {
+      const store = displays.section[currentSection];
+
+      const colorIntervals = () => store.colorIntervals;
+      const size = () => store.size;
+
+      return (
+        <Light
+          colorIntervals={colorIntervals}
+          size={size}
+          value={poller.value}
+        />
+      );
+    },
+  };
+
   return (
     <div
       class="flex px-2 pt-2"
@@ -158,11 +187,8 @@ export default function Tile(
               </div>
             }
           >
-            <rg.default
-              {...{
-                store: displays.section[currentSection],
-                value: poller.value,
-              }}
+            <Dynamic
+              component={display[displays.section[currentSection].displayType]}
             />
           </Show>
         </div>

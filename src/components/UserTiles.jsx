@@ -38,6 +38,7 @@ export default function UserTiles(props) {
         <Suspense>
           <For each={sections()}>
             {([section, tiles]) => {
+              //TODO: persist resize
               return (
                 <div class="min-w-xs resize-x overflow-auto">
                   <div class="warning-stripes flex justify-center">
@@ -45,7 +46,7 @@ export default function UserTiles(props) {
                       {section}
                     </h5>
                   </div>
-                  <div class="flex justify-evenly bg-gray-600 text-white pb-2">
+                  <div class="flex flex-wrap justify-evenly bg-gray-600 text-white pb-2">
                     <For each={tiles}>
                       {(tile, i) => (
                         <Tile
