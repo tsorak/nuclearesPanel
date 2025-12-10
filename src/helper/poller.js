@@ -186,6 +186,12 @@ async function getVariable(variable) {
 }
 
 function parseVariable(v, type) {
+  // In windows the Nucleares webserver responds with a comma instead of a period char.
+  // Javascripts Number constructor does not accept commas. Therefore we need this workaround:
+  if (shouldCheckForDecimal(type)) {
+    v = v.replace(",", ".");
+  }
+
   try {
     switch (type) {
       case "Number":
@@ -212,4 +218,10 @@ function parseVariable(v, type) {
   } catch (err) {
     return "PARSER ERROR:" + err;
   }
+}
+
+function shouldCheckForDecimal(parser) {
+  return ["Number", "Decimal", "1Decimal", "2Decimal", "3Decimal"].includes(
+    parser,
+  );
 }
