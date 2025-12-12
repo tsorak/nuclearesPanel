@@ -1,24 +1,16 @@
 import { For, Suspense } from "solid-js";
-import { createStore } from "solid-js/store";
+
+import persistStore from "../helper/persistStore.js";
+import { useAppState } from "../AppState.jsx";
 
 import Tile from "./Tile.jsx";
 import AddTile from "./AddTile.jsx";
-import * as pollerHelper from "../helper/poller.js";
-import * as tileHelper from "../helper/tile.js";
-import {
-  createStoreHelper,
-  rescueDisplay,
-  saveDisplay,
-} from "../helper/store.js";
 import PollerActiveControls from "./PollerActiveControls.jsx";
 
 import SegmentDisplay from "./displays/SegmentDisplay.jsx";
 
-export default function UserTiles(props) {
-  const [store, setStore] = createStore(persistStore.loadOrDefault());
-  const pollers = pollerHelper.makePollerStore(store.tiles);
-
-  const storeHelper = createStoreHelper(store, setStore);
+export default function UserTiles(_props) {
+  const { store, setStore, pollers, storeHelper } = useAppState();
 
   const sections = () => {
     return Array.from(Object.entries(store.sections));
@@ -30,9 +22,6 @@ export default function UserTiles(props) {
 
   return (
     <div class="flex flex-col gap-2">
-      <div class="flex">
-        <SegmentDisplay segments={3} />
-      </div>
       <Nav {...{ store, setStore, pollers }} />
       <div class="flex flex-wrap gap-2 mx-auto max-w-xs md:max-w-2xl lg:max-w-6xl">
         <Suspense>
@@ -48,7 +37,7 @@ export default function UserTiles(props) {
                   </div>
                   <div class="flex flex-wrap justify-evenly bg-gray-600 text-white pb-2">
                     <For each={tiles}>
-                      {(tile, i) => (
+                      {(tile, _i) => (
                         <Tile
                           tilePointer={tile}
                           pollerStore={pollers}
@@ -63,8 +52,6 @@ export default function UserTiles(props) {
             }}
           </For>
         </Suspense>
-      </div>
-      <div class="flex m-16">
       </div>
     </div>
   );
@@ -102,94 +89,3 @@ function Nav(props) {
     </div>
   );
 }
-
-const persistStore = {
-  save: (storeData) => {
-    const tiles = (() => {
-      const tiles = Object.entries(storeData.tiles).map(
-        ([varName, { sections, pointer }]) => {
-          const {
-            title,
-            unit,
-            parse,
-            rate,
-            displays,
-          } = pointer();
-
-          const displayPresetNames = Object.entries(displays.section).map((
-            [sec, obj],
-          ) => {
-            const { presetName, presetId } = obj;
-            if (!presetId) {
-              rescueDisplay(obj);
-              return [null, null];
-            }
-            saveDisplay(obj);
-            if (presetName) {
-              return [sec, { presetName, presetId }];
-            } else if (presetId) {
-              return [sec, { presetId }];
-            } else {
-              return [sec, null];
-            }
-          }).filter(([_, v]) => v !== null);
-
-          return {
-            varName,
-            title,
-            unit,
-            parse,
-            rate: rate.get(),
-            sections,
-            displays: Object.fromEntries(displayPresetNames),
-          };
-        },
-      );
-
-      return tiles;
-    })();
-
-    console.log(tiles);
-    // console.log(displaysByPresetName);
-
-    const str = JSON.stringify(tiles);
-    localStorage.setItem("store", str);
-  },
-  load: () => {
-    const storeData = localStorage.getItem("store");
-
-    if (storeData) {
-      try {
-        return JSON.parse(storeData);
-      } catch (_e) {
-        //
-      }
-    }
-
-    return null;
-  },
-  loadOrDefault: function () {
-    const defaultTiles = [
-      {
-        varName: "CORE_PRESSURE",
-        title: "Vessel Pressure",
-        unit: "bar",
-        parse: "1Decimal",
-        rate: 2000,
-        parserOverride: null,
-        sections: ["core", "pressurizer"],
-      },
-      {
-        varName: "CORE_TEMP",
-        title: "Internal Temperature",
-        unit: "°c",
-        parse: "Decimal",
-        rate: 1000,
-        parserOverride: null,
-        sections: ["core"],
-      },
-    ];
-
-    return tileHelper.tileToStoreStructure(this.load() ?? defaultTiles);
-  },
-};
