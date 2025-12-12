@@ -60,7 +60,7 @@ const rodControls = {
   },
 };
 
-const controller = {
+const makeController = () => ({
   targetTemp: 360,
   sensors: {
     coreTemp: null,
@@ -74,18 +74,22 @@ const controller = {
     if (this.intervalIds.step !== null) {
       clearInterval(this.intervalIds.step);
       clearInterval(this.intervalIds.safetyStep);
+      this.intervalIds.step = null;
+      this.intervalIds.safetyStep = null;
     } else {
-      setInterval(this.step, 10000);
-      setInterval(this.safetyStep, 1000);
+      this.intervalIds.step = setInterval(() => this.step(), 10000);
+      this.intervalIds.safetyStep = setInterval(() => this.safetyStep(), 1000);
     }
   },
   stop: function () {
     if (this.intervalIds.step !== null) {
       clearInterval(this.intervalIds.step);
+      this.intervalIds.step = null;
     }
 
     if (this.intervalIds.safetyStep !== null) {
       clearInterval(this.intervalIds.safetyStep);
+      this.intervalIds.safetyStep = null;
     }
   },
 
@@ -132,8 +136,10 @@ const controller = {
       }
     }
   },
-};
+});
 
 function log(...parts) {
   console.log("[RODS_CONTROLLER]:", ...parts);
 }
+
+export default makeController;
