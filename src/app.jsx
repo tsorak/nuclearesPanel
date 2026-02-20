@@ -12,7 +12,7 @@ export default function App() {
     <AppState.Provider>
       <ContextMenu>
         <Suspense>
-          <main class="bg-neutral-900 h-screen flex flex-col gap-2">
+          <main class="bg-neutral-900 h-screen flex flex-col gap-2 select-none">
             <WindowControls />
             <UserTiles />
             <FacilityControls />
