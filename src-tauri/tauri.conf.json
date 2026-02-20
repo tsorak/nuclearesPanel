@@ -12,9 +12,10 @@
   "app": {
     "windows": [
       {
-        "title": "nucleares-panel",
+        "title": "Nucleares Panel",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "decorations": false
       }
     ],
     "security": {
