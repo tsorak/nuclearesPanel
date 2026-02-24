@@ -5,7 +5,11 @@ export default function WindowControls(props) {
 
   return (
     <div class="flex bg-neutral-800 text-neutral-300">
-      <img src="/favicon.ico" alt="Application Logo" class="w-6 h-6" />
+      <img
+        src="/favicon.ico"
+        alt="Application Logo"
+        class="w-6 h-6 p-1"
+      />
       <button
         type="button"
         class="flex-grow select-none"
