@@ -8,6 +8,7 @@ import AddTile from "./AddTile.jsx";
 import PollerActiveControls from "./PollerActiveControls.jsx";
 
 import SegmentDisplay from "./displays/SegmentDisplay.jsx";
+import ShareConfig from "./ShareConfig.jsx";
 
 export default function UserTiles(_props) {
   const { store, setStore, pollers, storeHelper } = useAppState();
@@ -75,6 +76,7 @@ function Nav(props) {
           >
             Save
           </button>
+          <ShareConfig />
         </div>
       </div>
 
