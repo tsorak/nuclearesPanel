@@ -1,3 +1,4 @@
+import { createSignal, Show } from "solid-js";
 import * as clipboard from "@tauri-apps/plugin-clipboard-manager";
 import { ask, message, open, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
@@ -11,48 +12,89 @@ const CONFIG_VERSION = 1;
 const btnClass =
   "bg-gray-600 hover:bg-gray-500 active:bg-gray-700 transition-colors text-white py-1 px-2 cursor-pointer";
 
+const dropdownBtnClass =
+  "block w-full text-left px-3 py-2 hover:bg-gray-500 transition-colors cursor-pointer";
+
 export default function ShareConfig(props) {
+  const [openDropdown, setOpenDropdown] = createSignal(null);
+
+  const DropdownMenu = (props) => (
+    <div class="absolute bg-gray-600 border border-gray-600 rounded-b-md shadow-lg z-10 min-w-max overflow-hidden">
+      {props.children}
+    </div>
+  );
+
   return (
-    <>
-      <button
-        type="button"
-        class={btnClass}
-        onclick={async () => {
-          try {
-            helper.exportToClipboard();
-            await message("Settings copied to clipboard!");
-          } catch (_e) {
-            await message("Error exporting config", { kind: "error" });
-          }
-        }}
+    <div class="flex">
+      <div
+        class="relative"
+        onmouseenter={() => setOpenDropdown("export")}
+        onmouseleave={() => setOpenDropdown(null)}
       >
-        Export
-      </button>
+        <button
+          type="button"
+          class={btnClass}
+        >
+          Export
+        </button>
+        <Show when={openDropdown() === "export"}>
+          <DropdownMenu>
+            <button
+              type="button"
+              class={`${dropdownBtnClass} text-white`}
+              onclick={async () => {
+                try {
+                  helper.exportToClipboard();
+                  await message("Settings copied to clipboard!");
+                } catch (_e) {
+                  await message("Error exporting config", { kind: "error" });
+                }
+              }}
+            >
+              To clipboard
+            </button>
+            <button
+              type="button"
+              class={`${dropdownBtnClass} text-white border-t border-gray-600`}
+              onclick={() => helper.exportToFile()}
+            >
+              To json file
+            </button>
+          </DropdownMenu>
+        </Show>
+      </div>
 
-      <button
-        type="button"
-        class={btnClass}
-        onclick={() => helper.importFromClipboard()}
+      <div
+        class="relative"
+        onmouseenter={() => setOpenDropdown("import")}
+        onmouseleave={() => setOpenDropdown(null)}
       >
-        Import
-      </button>
-
-      <button
-        type="button"
-        class={btnClass}
-        onclick={() => helper.exportToFile()}
-      >
-        Export File
-      </button>
-
-      <button
-        type="button"
-        class={btnClass}
-        onclick={() => helper.importFromFile()}
-      >
-        Import File
-      </button>
-    </>
+        <button
+          type="button"
+          class={btnClass}
+        >
+          Import
+        </button>
+        <Show when={openDropdown() === "import"}>
+          <DropdownMenu>
+            <button
+              type="button"
+              class={`${dropdownBtnClass} text-white`}
+              onclick={() => helper.importFromClipboard()}
+            >
+              From clipboard
+            </button>
+            <button
+              type="button"
+              class={`${dropdownBtnClass} text-white border-t border-gray-600`}
+              onclick={() => helper.importFromFile()}
+            >
+              From json file
+            </button>
+          </DropdownMenu>
+        </Show>
+      </div>
+    </div>
   );
 }
 
@@ -79,7 +121,7 @@ const helper = {
     }
 
     const exportCurrent = await ask(
-      "Would you like to export your current config before importing?\nCanceling will delete the current data forever.",
+      "Would you like to export your current config before importing?\nPressing 'No' will delete the current data forever.",
       { kind: "warning" },
     );
 
@@ -149,7 +191,9 @@ const helper = {
   },
 
   parseError: async (s = "unknown error") => {
-    await message(`Could not parse the config input.\nError: ${s}`, { kind: "error" });
+    await message(`Could not parse the config input.\nError: ${s}`, {
+      kind: "error",
+    });
   },
 
   getConfigJson: () => {
