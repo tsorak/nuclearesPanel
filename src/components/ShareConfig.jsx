@@ -1,5 +1,5 @@
 import * as clipboard from "@tauri-apps/plugin-clipboard-manager";
-import { open, save } from "@tauri-apps/plugin-dialog";
+import { ask, message, open, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 
 import { useAppState } from "../AppState.jsx";
@@ -17,12 +17,12 @@ export default function ShareConfig(props) {
       <button
         type="button"
         class={btnClass}
-        onclick={() => {
+        onclick={async () => {
           try {
             helper.exportToClipboard();
-            alert("Settings copied to clipboard!");
+            await message("Settings copied to clipboard!");
           } catch (_e) {
-            alert("Error exporting config");
+            await message("Error exporting config", { kind: "error" });
           }
         }}
       >
@@ -78,14 +78,15 @@ const helper = {
       return helper.parseError(e.message);
     }
 
-    const exportCurrent = confirm(
-      "Would you like to export your current config before importing?\r\nCanceling will delete the current data forever.",
+    const exportCurrent = await ask(
+      "Would you like to export your current config before importing?\nCanceling will delete the current data forever.",
+      { kind: "warning" },
     );
 
     if (exportCurrent) {
       const currentData = helper.exportToClipboard();
       await clipboard.writeText(currentData);
-      alert("The config has been saved to your clipboard!");
+      await message("The config has been saved to your clipboard!");
     }
 
     helper.applyConfig(data);
@@ -103,9 +104,9 @@ const helper = {
     try {
       const data = helper.getConfigJson();
       await writeTextFile(path, data);
-      alert("Config exported to file!");
+      await message("Config exported to file!");
     } catch (_e) {
-      alert("Error exporting config to file");
+      await message("Error exporting config to file", { kind: "error" });
     }
   },
 
@@ -133,21 +134,22 @@ const helper = {
       return helper.parseError(e.message);
     }
 
-    const exportCurrent = confirm(
-      "Would you like to export your current config before importing?\r\nCanceling will delete the current data forever.",
+    const exportCurrent = await ask(
+      "Would you like to export your current config before importing?\nCanceling will delete the current data forever.",
+      { kind: "warning" },
     );
 
     if (exportCurrent) {
       const currentData = helper.exportToClipboard();
       await clipboard.writeText(currentData);
-      alert("The config has been saved to your clipboard!");
+      await message("The config has been saved to your clipboard!");
     }
 
     helper.applyConfig(data);
   },
 
-  parseError: (s = "unknown error") => {
-    alert(`Could not parse the config input.\r\nError: ${s}`);
+  parseError: async (s = "unknown error") => {
+    await message(`Could not parse the config input.\nError: ${s}`, { kind: "error" });
   },
 
   getConfigJson: () => {
