@@ -1,4 +1,3 @@
-import { createSignal, Show } from "solid-js";
 import * as clipboard from "@tauri-apps/plugin-clipboard-manager";
 import { ask, message, open, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
@@ -6,103 +5,46 @@ import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { useAppState } from "../AppState.jsx";
 import persistStore from "../helper/persistStore.js";
 import { tileToStoreStructure } from "../helper/tile.js";
+import Dropdown, { DropdownItem } from "./Dropdown.jsx";
 
 const CONFIG_VERSION = 1;
 
-const btnClass =
-  "bg-gray-600 hover:bg-gray-500 active:bg-gray-700 transition-colors text-white py-1 px-2 cursor-pointer";
-
-const dropdownBtnClass =
-  "block w-full text-left px-3 py-2 hover:bg-gray-500 transition-colors cursor-pointer";
-
 export default function ShareConfig(props) {
-  const [openDropdown, setOpenDropdown] = createSignal(null);
-
-  const DropdownMenu = (props) => (
-    <div class="absolute bg-gray-600 border border-gray-600 rounded-b-md shadow-lg z-10 min-w-max overflow-hidden">
-      {props.children}
-    </div>
-  );
-
   return (
     <div class="flex">
-      <div
-        class="relative"
-        onmouseenter={() => setOpenDropdown("export")}
-        onmouseleave={() => setOpenDropdown(null)}
-      >
-        <button
-          type="button"
-          class={btnClass}
-        >
-          Export
-        </button>
-        <Show when={openDropdown() === "export"}>
-          <DropdownMenu>
-            <button
-              type="button"
-              class={`${dropdownBtnClass} text-white`}
-              onclick={async () => {
-                try {
-                  helper.exportToClipboard();
-                  await message("Settings copied to clipboard!");
-                } catch (_e) {
-                  await message("Error exporting config", { kind: "error" });
-                }
-              }}
-            >
-              To clipboard
-            </button>
-            <button
-              type="button"
-              class={`${dropdownBtnClass} text-white border-t border-gray-600`}
-              onclick={() => helper.exportToFile()}
-            >
-              To json file
-            </button>
-          </DropdownMenu>
-        </Show>
-      </div>
+      <Dropdown label="Import">
+        <DropdownItem onclick={() => helper.importFromClipboard()}>
+          From clipboard
+        </DropdownItem>
+        <DropdownItem onclick={() => helper.importFromFile()}>
+          From json file
+        </DropdownItem>
+      </Dropdown>
 
-      <div
-        class="relative"
-        onmouseenter={() => setOpenDropdown("import")}
-        onmouseleave={() => setOpenDropdown(null)}
-      >
-        <button
-          type="button"
-          class={btnClass}
+      <Dropdown label="Export">
+        <DropdownItem
+          onclick={() => helper.exportToClipboard()}
         >
-          Import
-        </button>
-        <Show when={openDropdown() === "import"}>
-          <DropdownMenu>
-            <button
-              type="button"
-              class={`${dropdownBtnClass} text-white`}
-              onclick={() => helper.importFromClipboard()}
-            >
-              From clipboard
-            </button>
-            <button
-              type="button"
-              class={`${dropdownBtnClass} text-white border-t border-gray-600`}
-              onclick={() => helper.importFromFile()}
-            >
-              From json file
-            </button>
-          </DropdownMenu>
-        </Show>
-      </div>
+          To clipboard
+        </DropdownItem>
+        <DropdownItem onclick={() => helper.exportToFile()}>
+          To json file
+        </DropdownItem>
+      </Dropdown>
     </div>
   );
 }
 
 const helper = {
-  exportToClipboard: () => {
-    const data = helper.getConfigJson();
-    clipboard.writeText(data);
-    return data;
+  exportToClipboard: async () => {
+    try {
+      const data = helper.getConfigJson();
+      clipboard.writeText(data);
+      await message("Settings copied to clipboard!");
+      return data;
+    } catch (_e) {
+      await message("Error exporting config", { kind: "error" });
+    }
   },
 
   importFromClipboard: async () => {
