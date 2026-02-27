@@ -43,7 +43,7 @@ export function addTile(
 }
 
 /**
- * @param {Object | Object[]} tiles
+ * @param {Object | Object[]} arg
  */
 export function tileToStoreStructure(arg, opts) {
   const o = {
