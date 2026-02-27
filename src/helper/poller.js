@@ -140,6 +140,7 @@ export function makePoller(config) {
 
       return await parseVariable(value, parsePreset);
     },
+    { initialValue: "..." },
   );
 
   const [active, setActive] = createSignal(false);
