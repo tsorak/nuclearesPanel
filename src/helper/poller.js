@@ -126,7 +126,7 @@ export function makePoller(config) {
 
   const [value, { refetch }] = createResource(
     async () => {
-      const value = await getVariable(variable);
+      const value = await getVariable(variable, { timeout: getRate() - 10 });
 
       // for some reason getVariable refuses to throw errors up the stack...
       // ugly way required
@@ -175,10 +175,15 @@ export function makePoller(config) {
   };
 }
 
-async function getVariable(variable) {
+async function getVariable(variable, { timeout } = { timeout: 1000 }) {
   let res;
   try {
-    res = await fetch(`http://localhost:8785/?variable=${variable}`);
+    const ctrl = new AbortController();
+    const timeoutHandle = setTimeout(() => ctrl.abort(), timeout);
+    res = await fetch(`http://localhost:8785/?variable=${variable}`, {
+      signal: ctrl.signal,
+    });
+    clearTimeout(timeoutHandle);
   } catch (_e) {
     return new Error("Failed to fetch " + variable);
   }
