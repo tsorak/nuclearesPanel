@@ -9,18 +9,16 @@ import FacilityControls from "./components/FacilityControls.jsx";
 
 export default function App() {
   return (
-    <Suspense fallback={<p class="text-red-500">loading ui...</p>}>
-      <AppState.Provider>
-        <ContextMenu>
-          <Suspense>
-            <main class="bg-neutral-900 h-screen flex flex-col gap-2 select-none">
-              <WindowControls />
-              <UserTiles />
-              <FacilityControls />
-            </main>
-          </Suspense>
-        </ContextMenu>
-      </AppState.Provider>
-    </Suspense>
+    <AppState.Provider>
+      <ContextMenu>
+        <Suspense>
+          <main class="bg-neutral-900 h-screen flex flex-col gap-2 select-none">
+            <WindowControls />
+            <UserTiles />
+            <FacilityControls />
+          </main>
+        </Suspense>
+      </ContextMenu>
+    </AppState.Provider>
   );
 }
