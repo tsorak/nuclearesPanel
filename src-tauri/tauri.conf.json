@@ -15,7 +15,19 @@
         "title": "Nucleares Panel",
         "width": 800,
         "height": 600,
-        "decorations": false
+        "decorations": false,
+        "visible": false
+      },
+      {
+        "label": "splash",
+        "url": "src/splash.html",
+        "width": 512,
+        "height": 512,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "center": true,
+        "transparent": true,
+        "javascriptDisabled":true
       }
     ],
     "security": {

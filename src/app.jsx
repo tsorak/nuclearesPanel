@@ -1,4 +1,5 @@
-import { Suspense } from "solid-js";
+import { onMount, Suspense } from "solid-js";
+import { invoke } from "@tauri-apps/api/core";
 import "./app.css";
 
 import ContextMenu from "./components/ContextMenu.jsx";
@@ -8,6 +9,10 @@ import AppState from "./AppState.jsx";
 import FacilityControls from "./components/FacilityControls.jsx";
 
 export default function App() {
+  onMount(() => {
+    setTimeout(() => invoke("close_splash"), 1000);
+  });
+
   return (
     <AppState.Provider>
       <ContextMenu>
